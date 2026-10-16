@@ -18,6 +18,8 @@ import com.sreecharan.stressrelief.data.local.toDomain
 import com.sreecharan.stressrelief.data.model.InsightCard
 import com.sreecharan.stressrelief.data.model.InsightsData
 import com.sreecharan.stressrelief.data.model.JournalEntry
+import com.sreecharan.stressrelief.data.model.Recommendation
+import com.sreecharan.stressrelief.data.model.RecommendationKind
 import com.sreecharan.stressrelief.data.model.MoodCheckIn
 import com.sreecharan.stressrelief.data.model.StressScore
 import com.sreecharan.stressrelief.data.util.TimeUtils
@@ -195,6 +197,7 @@ class WellnessRepositoryImpl
             val strips = if (healthConnected) healthConnectClient.readSleepStrips(SRI_WINDOW_DAYS) else emptyList()
             val rhrDays = if (healthConnected) healthConnectClient.readRestingHrDays(RHR_WINDOW_DAYS) else emptyList()
             val hrvDays = if (healthConnected) healthConnectClient.readHrvDays(HISTORY_WINDOW_DAYS) else emptyList()
+            val stepDays = if (healthConnected) healthConnectClient.readStepDays(STEP_WINDOW_DAYS) else emptyList()
 
             // Room inputs.
             val monthAgoMs = System.currentTimeMillis() - HISTORY_WINDOW_DAYS * TimeUtils.DAY_MS
@@ -299,6 +302,28 @@ class WellnessRepositoryImpl
                 )
             val insightCards = calc.sortCardsByPriority(cards.filterNotNull())
 
+            // Steps: trailing-7-day window for the chart; today vs average.
+            val stepsWeek = stepDays.takeLast(STEP_WINDOW_DAYS)
+            val stepsToday = stepsWeek.find { it.epochDay == todayEpochDay }?.steps
+            val steps7DayAvg = stepsWeek.map { it.steps }.takeIf { it.isNotEmpty() }?.average()
+            val distanceTodayM = stepsWeek.find { it.epochDay == todayEpochDay }?.distanceMeters
+
+            val recommendations =
+                buildRecommendations(
+                    sleepDebtHours = sleepDebtHours,
+                    sleepNeedHours = needHours,
+                    nightInputs = nightInputs,
+                    lastNightScore = lastNightScore,
+                    stepsToday = stepsToday,
+                    steps7DayAvg = steps7DayAvg,
+                    restingHrZ = restingHrZ,
+                    latestRhrBpm = latestRhr?.bpm,
+                    rhrBaselineMean = rhrBaseline?.mean,
+                    recoveryBand = recoveryBand,
+                    recoveryScore = recoveryScore,
+                    breathingToday = breathingToday,
+                )
+
             return InsightsData(
                 sleepNights = sleepNights,
                 sleepDebtHours = sleepDebtHours,
@@ -314,6 +339,11 @@ class WellnessRepositoryImpl
                 restingHrTrendBpmPerDay = rhrTrend,
                 sleepTrendMinPerDay = sleepTrend,
                 insightCards = insightCards,
+                recommendations = recommendations,
+                stepDays = stepsWeek,
+                stepsToday = stepsToday,
+                steps7DayAvg = steps7DayAvg,
+                distanceTodayM = distanceTodayM,
                 calibrating = calibrating,
                 healthConnected = healthConnected,
             )
@@ -517,6 +547,154 @@ class WellnessRepositoryImpl
             return calc.correlationCard(r, xs.size, "Heart rate and mood", body)
         }
 
+        /**
+         * Actionable "do this today" items, each tied to a visible number.
+         * Priority-ordered; the UI shows the top 4.
+         */
+        private fun buildRecommendations(
+            sleepDebtHours: Float?,
+            sleepNeedHours: Float,
+            nightInputs: List<InsightCalculators.SleepNightInput>,
+            lastNightScore: Int?,
+            stepsToday: Long?,
+            steps7DayAvg: Double?,
+            restingHrZ: Float?,
+            latestRhrBpm: Double?,
+            rhrBaselineMean: Double?,
+            recoveryBand: RecoveryBand,
+            recoveryScore: Int?,
+            breathingToday: Int,
+        ): List<Recommendation> {
+            val zone = ZoneId.systemDefault()
+            val recs = mutableListOf<Pair<Int, Recommendation>>()
+
+            if (sleepDebtHours != null && sleepDebtHours >= RECOMMEND_DEBT_HOURS) {
+                val usualWakeMs =
+                    nightInputs.mapNotNull { it.wakeMs }.takeIf { it.isNotEmpty() }?.average()?.toLong()
+                val bedtimeText =
+                    if (usualWakeMs != null) {
+                        val target = usualWakeMs - (sleepNeedHours * 3_600_000).toLong()
+                        "Lights out by ${formatClock(target, zone)} covers ${"%.1f".format(sleepNeedHours)}h " +
+                            "before your usual ${formatClock(usualWakeMs, zone)} wake-up."
+                    } else {
+                        "An early night tonight pays some of it back."
+                    }
+                recs +=
+                    0 to
+                        Recommendation(
+                            title = "Pay back sleep debt",
+                            body = "You owe ${"%.1f".format(sleepDebtHours)}h of sleep. $bedtimeText",
+                            metricLabel = "Sleep debt",
+                            metricValue = "${"%.1f".format(sleepDebtHours)} h",
+                            kind = RecommendationKind.SLEEP,
+                        )
+            }
+
+            if (restingHrZ != null && restingHrZ >= RECOMMEND_RHR_Z && latestRhrBpm != null && rhrBaselineMean != null &&
+                rhrBaselineMean > 0
+            ) {
+                val pct = ((latestRhrBpm - rhrBaselineMean) / rhrBaselineMean * 100).roundToInt()
+                recs +=
+                    1 to
+                        Recommendation(
+                            title = "Keep today light",
+                            body =
+                                "Resting HR is $pct% above your baseline " +
+                                    "(${latestRhrBpm.roundToInt()} vs ${rhrBaselineMean.roundToInt()} bpm). " +
+                                    "Skip the hard workout.",
+                            metricLabel = "Resting HR",
+                            metricValue = "${latestRhrBpm.roundToInt()} bpm",
+                            kind = RecommendationKind.RECOVERY,
+                        )
+            }
+
+            if (stepsToday != null && steps7DayAvg != null && steps7DayAvg >= RECOMMEND_MIN_AVG_STEPS) {
+                if (stepsToday < steps7DayAvg * RECOMMEND_LOW_DAY_FRACTION) {
+                    recs +=
+                        2 to
+                            Recommendation(
+                                title = "Move more today",
+                                body =
+                                    "${formatSteps(stepsToday)} steps so far vs your " +
+                                        "${formatSteps(steps7DayAvg.roundToInt())} daily average. " +
+                                        "A brisk 20-minute walk adds roughly 2,000.",
+                                metricLabel = "Steps today",
+                                metricValue = formatSteps(stepsToday),
+                                kind = RecommendationKind.ACTIVITY,
+                            )
+                }
+            }
+
+            if (steps7DayAvg != null && steps7DayAvg < RECOMMEND_LOW_AVG_STEPS && steps7DayAvg >= RECOMMEND_MIN_AVG_STEPS) {
+                recs +=
+                    3 to
+                        Recommendation(
+                            title = "Raise the baseline",
+                            body =
+                                "Your 7-day average is ${formatSteps(steps7DayAvg.roundToInt())} steps. " +
+                                    "7,000 a day is a solid first target.",
+                            metricLabel = "7-day average",
+                            metricValue = formatSteps(steps7DayAvg.roundToInt()),
+                            kind = RecommendationKind.ACTIVITY,
+                        )
+            }
+
+            if (lastNightScore != null && lastNightScore < RECOMMEND_POOR_NIGHT) {
+                recs +=
+                    4 to
+                        Recommendation(
+                            title = "Reset tonight",
+                            body = "Last night scored $lastNightScore/100. Wind down 30 minutes earlier than usual.",
+                            metricLabel = "Last night",
+                            metricValue = "$lastNightScore/100",
+                            kind = RecommendationKind.SLEEP,
+                        )
+            }
+
+            if (recoveryBand == RecoveryBand.DEPLETED && recoveryScore != null) {
+                recs +=
+                    5 to
+                        Recommendation(
+                            title = "Protect recovery",
+                            body = "Recovery is $recoveryScore/100 and depleted. Prioritize sleep over training today.",
+                            metricLabel = "Recovery",
+                            metricValue = "$recoveryScore/100",
+                            kind = RecommendationKind.RECOVERY,
+                        )
+            }
+
+            if (breathingToday == 0) {
+                recs +=
+                    6 to
+                        Recommendation(
+                            title = "Take 5 slow minutes",
+                            body = "No breathing time yet today. A 5-minute session now blunts the evening spike.",
+                            metricLabel = "Breathing today",
+                            metricValue = "0 min",
+                            kind = RecommendationKind.BREATHING,
+                        )
+            }
+
+            return recs.sortedBy { it.first }.take(RECOMMEND_MAX).map { it.second }
+        }
+
+        private fun formatClock(
+            epochMs: Long,
+            zone: ZoneId,
+        ): String {
+            val t = java.time.Instant.ofEpochMilli(epochMs).atZone(zone).toLocalTime()
+            val hour12 =
+                when {
+                    t.hour == 0 -> 12
+                    t.hour > 12 -> t.hour - 12
+                    else -> t.hour
+                }
+            val ampm = if (t.hour < 12) "AM" else "PM"
+            return "$hour12:${"%02d".format(t.minute)} $ampm"
+        }
+
+        private fun formatSteps(steps: Long): String = "%,d".format(steps)
+
         companion object {
             private const val STREAK_LOOKBACK_DAYS = 730
             private const val SCORE_HISTORY_LIMIT = 200
@@ -528,6 +706,14 @@ class WellnessRepositoryImpl
             private const val CALIBRATION_DAYS = 7
             private const val DEBT_REFERENCE_HOURS = 2.0
             private const val RHR_STREAK_PCT = 0.08
+            private const val STEP_WINDOW_DAYS = 7
+            private const val RECOMMEND_MAX = 4
+            private const val RECOMMEND_DEBT_HOURS = 2.0f
+            private const val RECOMMEND_RHR_Z = 1.5f
+            private const val RECOMMEND_MIN_AVG_STEPS = 500.0
+            private const val RECOMMEND_LOW_AVG_STEPS = 5000.0
+            private const val RECOMMEND_LOW_DAY_FRACTION = 0.5
+            private const val RECOMMEND_POOR_NIGHT = 55
         }
 
         private suspend fun markActivity(transform: DailyActivityEntity.() -> DailyActivityEntity) {

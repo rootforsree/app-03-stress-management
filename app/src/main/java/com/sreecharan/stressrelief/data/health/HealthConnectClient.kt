@@ -4,16 +4,19 @@ import android.content.Context
 import androidx.activity.result.contract.ActivityResultContract
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.DistanceRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.HeartRateVariabilityRmssdRecord
 import androidx.health.connect.client.records.RestingHeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
+import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.metadata.Device
 import androidx.health.connect.client.records.metadata.Metadata
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import com.sreecharan.stressrelief.data.model.StressSignals
+import com.sreecharan.stressrelief.data.repository.InsightCalculators
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -35,6 +38,8 @@ class HealthConnectClient(
             HealthPermission.getReadPermission(SleepSessionRecord::class),
             HealthPermission.getReadPermission(HeartRateRecord::class),
             HealthPermission.getReadPermission(HeartRateVariabilityRmssdRecord::class),
+            HealthPermission.getReadPermission(StepsRecord::class),
+            HealthPermission.getReadPermission(DistanceRecord::class),
         )
 
     private val writePermissionSet: Set<String> =
@@ -274,6 +279,63 @@ class HealthConnectClient(
                 .groupBy { it.time.atZone(zone).toLocalDate().toEpochDay() }
                 .map { (day, records) -> HrvDay(day, records.map { it.heartRateVariabilityMillis }.average()) }
                 .sortedBy { it.epochDay }
+        }.getOrElse { emptyList() }
+
+    /**
+     * Daily step + distance totals over the trailing [days] days, ascending.
+     *
+     * Dedup (the 3x-inflation fix): writers duplicate rows. Samsung Health
+     * emits 2 identical step rows per day per device UUID; Google Fit emits
+     * its own copy of the same underlying activity. Raw sums would triple
+     * count. The collapse rule, per recorded data-quality history:
+     *  - per (day, writer package): steps = max (identical duplicates), and
+     *    distance = sum of that writer's segments (non-overlapping parts);
+     *  - per day: max across writers (one row per day; writers observe the
+     *    same phone, so summing across them double counts).
+     * Distance in meters is the more reliable signal and is surfaced
+     * alongside steps wherever present. Empty when unavailable. Never throws.
+     */
+    suspend fun readStepDays(days: Int): List<StepDay> =
+        runCatching {
+            if (!isAvailable() || !hasAllPermissions()) return emptyList()
+            val client = AndroidHealthConnectClient.getOrCreate(context)
+            val zone = ZoneId.systemDefault()
+            val end = Instant.now()
+            val range = TimeRangeFilter.between(end.minus(days.toLong(), ChronoUnit.DAYS), end)
+
+            val stepEntries =
+                client
+                    .readRecords(
+                        ReadRecordsRequest(
+                            recordType = StepsRecord::class,
+                            timeRangeFilter = range,
+                        ),
+                    ).records
+                    .map { record ->
+                        StepSourceEntry(
+                            epochDay = record.startTime.atZone(zone).toLocalDate().toEpochDay(),
+                            packageName = record.metadata.dataOrigin.packageName,
+                            steps = record.count,
+                            distanceMeters = 0.0,
+                        )
+                    }
+            val distanceEntries =
+                client
+                    .readRecords(
+                        ReadRecordsRequest(
+                            recordType = DistanceRecord::class,
+                            timeRangeFilter = range,
+                        ),
+                    ).records
+                    .map { record ->
+                        StepSourceEntry(
+                            epochDay = record.startTime.atZone(zone).toLocalDate().toEpochDay(),
+                            packageName = record.metadata.dataOrigin.packageName,
+                            steps = 0L,
+                            distanceMeters = record.distance.inMeters,
+                        )
+                    }
+            InsightCalculators.dedupeStepDays(stepEntries + distanceEntries)
         }.getOrElse { emptyList() }
 
     private fun mapStageType(stage: Int): SleepStageType =

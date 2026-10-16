@@ -1,6 +1,8 @@
 package com.sreecharan.stressrelief.data.repository
 
 import com.sreecharan.stressrelief.data.health.SleepDayStrip
+import com.sreecharan.stressrelief.data.health.StepDay
+import com.sreecharan.stressrelief.data.health.StepSourceEntry
 import com.sreecharan.stressrelief.data.model.InsightCard
 import com.sreecharan.stressrelief.data.model.InsightKind
 import com.sreecharan.stressrelief.data.model.RecoveryBand
@@ -178,6 +180,8 @@ object InsightCalculators {
             wasoMin = input.wasoMin,
             awakenings = input.awakenings,
             latencyMin = input.latencyMin,
+            bedTimeMs = input.sleepOnsetMs,
+            wakeTimeMs = input.wakeMs,
             score = score,
             durationScore = durationScore,
             efficiencyScore = efficiencyScore,
@@ -417,6 +421,39 @@ object InsightCalculators {
 
     /** Mood-derived stress proxy 0..100, higher = more stressed. Mirrors StressScoreCalculator's mood term. */
     fun stressProxyFromMood(moodScore: Int): Double = (5 - moodScore.coerceIn(1, 5)) / 4.0 * 100.0
+
+    // ------------------------------------------------------------------
+    // 10. Step dedup (the 3x-inflation fix).
+    // ------------------------------------------------------------------
+
+    /**
+     * Collapses raw step/distance records to one [StepDay] per day.
+     *
+     * Writers duplicate rows: Samsung Health emits 2 identical step rows per
+     * day per device UUID and Google Fit emits its own copy of the same
+     * underlying activity, so naive sums come back ~3x inflated. Rule:
+     * per (day, writer package) take max steps (identical duplicates) and sum
+     * distance (that writer's non-overlapping segments); per day take the max
+     * across writers (writers observe the same phone, so cross-writer sums
+     * double count). Pure and unit-testable.
+     */
+    fun dedupeStepDays(entries: List<StepSourceEntry>): List<StepDay> {
+        if (entries.isEmpty()) return emptyList()
+        val perWriter =
+            entries.groupBy { it.epochDay to it.packageName }.map { (key, records) ->
+                val (day, _) = key
+                Triple(day, records.maxOf { it.steps }, records.sumOf { it.distanceMeters })
+            }
+        return perWriter
+            .groupBy { it.first }
+            .map { (day, writers) ->
+                StepDay(
+                    epochDay = day,
+                    steps = writers.maxOf { it.second },
+                    distanceMeters = writers.maxOf { it.third }.takeIf { it > 0.0 },
+                )
+            }.sortedBy { it.epochDay }
+    }
 
     // ------------------------------------------------------------------
     // 9. Rule-based cards (recovery anomalies, sleep, trends, habits).

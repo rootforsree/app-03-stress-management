@@ -1,5 +1,7 @@
 package com.sreecharan.stressrelief.data.model
 
+import com.sreecharan.stressrelief.data.health.StepDay
+
 /**
  * Everything the Insights screen needs. Produced by a single
  * [com.sreecharan.stressrelief.data.repository.WellnessRepository.computeInsights]
@@ -31,6 +33,14 @@ data class InsightsData(
     val sleepTrendMinPerDay: Float?,
     /** Plain-language, ordered by priority. */
     val insightCards: List<InsightCard>,
+    /** Actionable "do this today" items, ordered by priority. Each ties to a visible number. */
+    val recommendations: List<Recommendation>,
+    /** Trailing 7 days of deduped step totals, ascending by epochDay. */
+    val stepDays: List<StepDay>,
+    val stepsToday: Long?,
+    val steps7DayAvg: Double?,
+    /** Today's distance in meters, null when no writer supplied it. */
+    val distanceTodayM: Double?,
     /** True when there are fewer than 7 days of health data. */
     val calibrating: Boolean,
     /** False when Health Connect is unavailable or denied. */
@@ -54,6 +64,11 @@ data class InsightsData(
                 restingHrTrendBpmPerDay = null,
                 sleepTrendMinPerDay = null,
                 insightCards = emptyList(),
+                recommendations = emptyList(),
+                stepDays = emptyList(),
+                stepsToday = null,
+                steps7DayAvg = null,
+                distanceTodayM = null,
                 calibrating = true,
                 healthConnected = false,
             )
@@ -83,4 +98,28 @@ enum class InsightKind {
     TREND,
     CORRELATION,
     HABIT,
+}
+
+/**
+ * One actionable "do this today" recommendation. Every recommendation is
+ * derived from a visible number on the Insights screen: [metricLabel] and
+ * [metricValue] name it so the advice never feels generic.
+ */
+data class Recommendation(
+    /** Short verb-led title, e.g. "Pay back sleep debt". */
+    val title: String,
+    /** One plain sentence with the number and the action. */
+    val body: String,
+    /** The number this is based on, e.g. "Sleep debt". */
+    val metricLabel: String,
+    /** Its value, e.g. "4.2 h". */
+    val metricValue: String,
+    val kind: RecommendationKind,
+)
+
+enum class RecommendationKind {
+    SLEEP,
+    ACTIVITY,
+    RECOVERY,
+    BREATHING,
 }

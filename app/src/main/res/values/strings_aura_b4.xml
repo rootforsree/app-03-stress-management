@@ -156,4 +156,46 @@
     <string name="insights_hrv_ms">%1$.0f ms</string>
     <!-- Insight cards -->
     <string name="insights_cards_title">For you</string>
+    <!-- Recovery hero (v4): compact, honest, never a fake number -->
+    <string name="insights_recovery_empty_title">No recovery score yet</string>
+    <string name="insights_recovery_empty_body">Connect Health and wear your tracker for a week. Your score appears here once there is enough data.</string>
+    <string name="insights_driver_rhr_label">Resting HR</string>
+    <string name="insights_driver_rhr_high">%1$d bpm above your baseline. This is dragging the score down.</string>
+    <string name="insights_driver_rhr_low">%1$d bpm below your baseline. This is lifting the score up.</string>
+    <string name="insights_driver_rhr_steady">Sitting right on your baseline.</string>
+    <string name="insights_driver_debt_label">Sleep debt</string>
+    <string name="insights_driver_debt_high">High debt is dragging the score down.</string>
+    <string name="insights_driver_debt_ok">Debt is under control.</string>
+    <!-- Recommendations -->
+    <string name="insights_recommendations_title">Do this today</string>
+    <!-- Steps section -->
+    <string name="insights_steps_title">Steps</string>
+    <string name="insights_steps_empty">No step data yet. Connect Health to see your daily totals.</string>
+    <string name="insights_steps_today">today</string>
+    <string name="insights_steps_avg">%1$s 7-day avg</string>
+    <string name="insights_steps_km">km today</string>
+    <string name="insights_steps_above_avg">%1$d%% above your average</string>
+    <string name="insights_steps_below_avg">%1$d%% below your average</string>
+    <string name="insights_steps_near_avg">Right around your average</string>
+    <!-- Sleep detail panel -->
+    <string name="insights_detail_slept">Slept</string>
+    <string name="insights_detail_score">Sleep score</string>
+    <string name="insights_detail_efficiency">Efficiency</string>
+    <string name="insights_detail_bedwake">Bed – wake</string>
+    <string name="insights_detail_timeinbed">Time in bed</string>
+    <string name="insights_detail_stages">Stages</string>
+    <string name="insights_detail_deep">%1$s deep</string>
+    <string name="insights_detail_rem">%1$s REM</string>
+    <string name="insights_detail_waso">Awake at night</string>
+    <!-- Steps detail panel -->
+    <string name="insights_detail_steps">Steps</string>
+    <string name="insights_detail_distance">Distance</string>
+    <string name="insights_detail_vs_avg">vs 7-day avg</string>
+    <!-- Heart verdicts, plain words -->
+    <string name="insights_rhr_verdict_extreme">Unusually high — %1$d%% above your baseline. Take today easy and get to bed early.</string>
+    <string name="insights_rhr_verdict_elevated">Elevated — %1$d%% above your baseline. Keep exertion light today.</string>
+    <string name="insights_rhr_verdict_low">%1$d%% below your baseline. Well recovered.</string>
+    <string name="insights_rhr_verdict_slightly_high">%1$d bpm above baseline — a touch high, nothing to worry about.</string>
+    <string name="insights_rhr_verdict_slightly_low">%1$d bpm below baseline — a good sign.</string>
+    <string name="insights_rhr_verdict_normal">Right in your normal range.</string>
 </resources>

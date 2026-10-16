@@ -96,6 +96,11 @@ class FakeWellnessRepository(
             restingHrTrendBpmPerDay = null,
             sleepTrendMinPerDay = null,
             insightCards = emptyList(),
+            recommendations = emptyList(),
+            stepDays = emptyList(),
+            stepsToday = null,
+            steps7DayAvg = null,
+            distanceTodayM = null,
             calibrating = true,
             healthConnected = false,
         )

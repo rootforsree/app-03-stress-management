@@ -5,6 +5,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,7 +23,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsWalk
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.filled.Air
 import androidx.compose.material.icons.filled.Bedtime
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Insights
@@ -41,8 +44,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -74,6 +79,7 @@ import com.sreecharan.stressrelief.ui.components.StaggerIn
 import com.sreecharan.stressrelief.ui.theme.AuroraBrushes
 import com.sreecharan.stressrelief.ui.theme.LocalAuroraDark
 import kotlin.math.abs
+import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 
 /**
@@ -211,27 +217,41 @@ private fun InsightsDashboard(
                 }
             }
         }
+        if (insights.recommendations.isNotEmpty()) {
+            item(key = "recommendations") {
+                StaggerIn(1) {
+                    AuraSectionTitle(stringResource(R.string.insights_recommendations_title))
+                    RecommendationsList(recommendations = insights.recommendations)
+                }
+            }
+        }
         item(key = "recovery") {
-            StaggerIn(1) {
+            StaggerIn(2) {
                 AuraSectionTitle(stringResource(R.string.insights_recovery_title))
                 RecoveryHeroCard(insights = insights)
             }
         }
         item(key = "sleep") {
-            StaggerIn(2) {
+            StaggerIn(3) {
                 AuraSectionTitle(stringResource(R.string.insights_sleep_title))
                 SleepSectionCard(insights = insights)
             }
         }
+        item(key = "steps") {
+            StaggerIn(4) {
+                AuraSectionTitle(stringResource(R.string.insights_steps_title))
+                StepsSectionCard(insights = insights)
+            }
+        }
         item(key = "heart") {
-            StaggerIn(3) {
+            StaggerIn(5) {
                 AuraSectionTitle(stringResource(R.string.insights_heart_title))
                 HeartSectionCard(insights = insights)
             }
         }
         if (insights.insightCards.isNotEmpty()) {
             item(key = "cards") {
-                StaggerIn(4) {
+                StaggerIn(6) {
                     AuraSectionTitle(stringResource(R.string.insights_cards_title))
                     InsightCardsList(cards = insights.insightCards)
                 }
@@ -329,12 +349,8 @@ private fun RecoveryHeroCard(
     insights: InsightsData,
     modifier: Modifier = Modifier,
 ) {
-    val calibrating = insights.calibrating || insights.recoveryBand == RecoveryBand.CALIBRATING
     val score = insights.recoveryScore
     val bandColor = recoveryBandColor(insights.recoveryBand)
-    val ringBrush = AuraGradients.sweep()
-    val trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
-    val context = LocalContext.current
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(28.dp),
@@ -343,98 +359,168 @@ private fun RecoveryHeroCard(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             ),
     ) {
-        Row(
-            Modifier.padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            val cd =
-                if (calibrating || score == null) {
-                    context.getString(R.string.insights_band_calibrating)
-                } else {
-                    context.getString(R.string.insights_recovery_score_cd, score)
-                }
-            Box(
-                Modifier
-                    .size(132.dp)
-                    .semantics { contentDescription = cd },
-                contentAlignment = Alignment.Center,
-            ) {
-                Canvas(Modifier.fillMaxSize()) {
-                    val stroke = 14.dp.toPx()
-                    val arcSize = Size(size.width - stroke, size.height - stroke)
-                    val arcTopLeft = Offset(stroke / 2, stroke / 2)
-                    drawArc(
-                        color = trackColor,
-                        startAngle = 0f,
-                        sweepAngle = 360f,
-                        useCenter = false,
-                        topLeft = arcTopLeft,
-                        size = arcSize,
-                        style = Stroke(width = stroke, cap = StrokeCap.Round),
-                    )
-                    val fraction = if (calibrating || score == null) 0f else score / 100f
-                    if (fraction > 0f) {
-                        drawArc(
-                            brush = ringBrush,
-                            startAngle = -90f,
-                            sweepAngle = 360f * fraction,
-                            useCenter = false,
-                            topLeft = arcTopLeft,
-                            size = arcSize,
-                            style = Stroke(width = stroke, cap = StrokeCap.Round),
-                        )
-                    }
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (calibrating || score == null) {
-                        Text(
-                            stringResource(R.string.insights_band_calibrating),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Black,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                    } else {
-                        Text(
-                            "$score",
-                            style = MaterialTheme.typography.displayLarge,
-                            fontWeight = FontWeight.Black,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Text(
-                            stringResource(R.string.home_score_out_of_100),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-            Spacer(Modifier.width(16.dp))
-            Column(Modifier.weight(1f)) {
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = bandColor.copy(alpha = 0.18f),
-                ) {
-                    Text(
-                        stringResource(insights.recoveryBand.labelRes()),
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = bandColor,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    )
-                }
-                Spacer(Modifier.height(8.dp))
+        if (score == null) {
+            // Honest empty state: never a fake number.
+            Column(Modifier.padding(20.dp)) {
                 Text(
-                    if (calibrating) {
-                        stringResource(R.string.insights_recovery_calibrating_body)
-                    } else {
-                        stringResource(R.string.insights_recovery_body)
-                    },
+                    stringResource(R.string.insights_recovery_empty_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    stringResource(R.string.insights_recovery_empty_body),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        } else {
+            RecoveryScoreCompact(
+                insights = insights,
+                score = score,
+                bandColor = bandColor,
+                modifier = Modifier.padding(16.dp),
+            )
         }
     }
+}
+
+/**
+ * Compact recovery row: small ring, band chip, and the two numbers that
+ * drive the score, in plain words. No giant static number.
+ */
+@Composable
+private fun RecoveryScoreCompact(
+    insights: InsightsData,
+    score: Int,
+    bandColor: Color,
+    modifier: Modifier = Modifier,
+) {
+    val ringBrush = AuraGradients.sweep()
+    val trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
+    val context = LocalContext.current
+    val cd = remember(score) { context.getString(R.string.insights_recovery_score_cd, score) }
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier
+                .size(76.dp)
+                .semantics { contentDescription = cd },
+            contentAlignment = Alignment.Center,
+        ) {
+            Canvas(Modifier.fillMaxSize()) {
+                val stroke = 9.dp.toPx()
+                val arcSize = Size(size.width - stroke, size.height - stroke)
+                val arcTopLeft = Offset(stroke / 2, stroke / 2)
+                drawArc(
+                    color = trackColor,
+                    startAngle = 0f,
+                    sweepAngle = 360f,
+                    useCenter = false,
+                    topLeft = arcTopLeft,
+                    size = arcSize,
+                    style = Stroke(width = stroke, cap = StrokeCap.Round),
+                )
+                drawArc(
+                    brush = ringBrush,
+                    startAngle = -90f,
+                    sweepAngle = 360f * (score / 100f),
+                    useCenter = false,
+                    topLeft = arcTopLeft,
+                    size = arcSize,
+                    style = Stroke(width = stroke, cap = StrokeCap.Round),
+                )
+            }
+            Text(
+                "$score",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Black,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        }
+        Spacer(Modifier.width(14.dp))
+        Column(Modifier.weight(1f)) {
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = bandColor.copy(alpha = 0.18f),
+            ) {
+                Text(
+                    stringResource(insights.recoveryBand.labelRes()),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = bandColor,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                )
+            }
+            Spacer(Modifier.height(8.dp))
+            RecoveryDriverLines(insights = insights)
+        }
+    }
+}
+
+/** The visible numbers behind the score, in plain words. */
+@Composable
+private fun RecoveryDriverLines(insights: InsightsData) {
+    val today = insights.restingHrToday
+    val baseline = insights.restingHrBaseline
+    if (today != null && baseline != null) {
+        val delta = today - baseline.roundToInt()
+        val verdict =
+            when {
+                delta >= 5 -> stringResource(R.string.insights_driver_rhr_high, delta)
+                delta <= -5 -> stringResource(R.string.insights_driver_rhr_low, -delta)
+                else -> stringResource(R.string.insights_driver_rhr_steady)
+            }
+        DriverLine(
+            label = stringResource(R.string.insights_driver_rhr_label),
+            value = "$today ${stringResource(R.string.insights_bpm_unit)}",
+            verdict = verdict,
+        )
+        Spacer(Modifier.height(4.dp))
+    }
+    val debt = insights.sleepDebtHours
+    if (debt != null) {
+        DriverLine(
+            label = stringResource(R.string.insights_driver_debt_label),
+            value = stringResource(R.string.insights_sleep_debt_hours, debt),
+            verdict =
+                if (debt >= 2f) {
+                    stringResource(R.string.insights_driver_debt_high)
+                } else {
+                    stringResource(R.string.insights_driver_debt_ok)
+                },
+        )
+    }
+}
+
+@Composable
+private fun DriverLine(
+    label: String,
+    value: String,
+    verdict: String,
+) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.width(6.dp))
+        Text(
+            value,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+    Text(
+        verdict,
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 // ---------------------------------------------------------------------------
@@ -455,12 +541,19 @@ private fun SleepSectionCard(
             ),
     ) {
         Column(Modifier.padding(20.dp)) {
-            val nights = insights.sleepNights
-            if (nights.any { it.score != null }) {
-                SleepScoreBars(
+            val nights = insights.sleepNights.takeLast(SLEEP_CHART_NIGHTS)
+            if (nights.any { it.totalSleepMin != null }) {
+                var selected by remember { mutableStateOf<Int?>(null) }
+                SleepInteractiveBars(
                     nights = nights,
-                    modifier = Modifier.fillMaxWidth().height(140.dp),
+                    selectedIndex = selected,
+                    onSelect = { selected = it },
                 )
+                val detail = selected?.let { nights.getOrNull(it) }
+                if (detail?.totalSleepMin != null) {
+                    Spacer(Modifier.height(12.dp))
+                    SleepNightDetail(night = detail)
+                }
                 Spacer(Modifier.height(16.dp))
             } else {
                 Text(
@@ -502,6 +595,458 @@ private fun SleepSectionCard(
     }
 }
 
+/** One bar in an interactive day chart. */
+private data class DayBar(
+    val dayLabel: String,
+    val valueLabel: String,
+    /** 0..1 fill of the track height. */
+    val fraction: Float,
+    val color: Color,
+    val hasData: Boolean,
+)
+
+@Composable
+private fun InteractiveDayBars(
+    bars: List<DayBar>,
+    selectedIndex: Int?,
+    onSelect: (Int?) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val trackColor = MaterialTheme.colorScheme.surfaceVariant
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        bars.forEachIndexed { i, bar ->
+            val selected = selectedIndex == i
+            Column(
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable(enabled = bar.hasData) { onSelect(if (selected) null else i) }
+                        .background(
+                            if (selected) {
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+                            } else {
+                                Color.Transparent
+                            },
+                        ).padding(vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    bar.valueLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                    color =
+                        if (bar.hasData) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                        },
+                    maxLines = 1,
+                )
+                Spacer(Modifier.height(4.dp))
+                Box(
+                    modifier = Modifier.height(96.dp).fillMaxWidth(),
+                    contentAlignment = Alignment.BottomCenter,
+                ) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth(0.6f)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(trackColor.copy(alpha = 0.6f)),
+                    )
+                    if (bar.hasData) {
+                        Box(
+                            Modifier
+                                .fillMaxWidth(0.6f)
+                                .fillMaxHeight(bar.fraction.coerceIn(0.04f, 1f))
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(bar.color.copy(alpha = if (selected || selectedIndex == null) 1f else 0.45f)),
+                        )
+                    }
+                }
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    bar.dayLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SleepInteractiveBars(
+    nights: List<SleepNightScore>,
+    selectedIndex: Int?,
+    onSelect: (Int?) -> Unit,
+) {
+    val stops = AuroraBrushes.heroStops(LocalAuroraDark.current)
+    val bars =
+        nights.map { night ->
+            val hours = night.totalSleepMin?.let { it / 60f }
+            DayBar(
+                dayLabel = shortWeekday(night.epochDay),
+                valueLabel = hours?.let { "%.1fh".format(it) } ?: "–",
+                fraction = hours?.let { (it / 10f).coerceIn(0f, 1f) } ?: 0f,
+                color =
+                    night.score?.let { lerp(stops[3], stops[0], (it / 100f).coerceIn(0f, 1f)) }
+                        ?: stops[0],
+                hasData = hours != null,
+            )
+        }
+    InteractiveDayBars(bars = bars, selectedIndex = selectedIndex, onSelect = onSelect)
+}
+
+@Composable
+private fun SleepNightDetail(night: SleepNightScore) {
+    val zone = remember { java.time.ZoneId.systemDefault() }
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Text(
+                fullDate(night.epochDay),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(8.dp))
+            DetailRow(
+                stringResource(R.string.insights_detail_slept),
+                night.totalSleepMin?.let { formatHoursMin(it) } ?: "–",
+            )
+            night.score?.let { DetailRow(stringResource(R.string.insights_detail_score), "$it/100") }
+            night.sleepEfficiencyPct?.let { DetailRow(stringResource(R.string.insights_detail_efficiency), "$it%") }
+            val bed = night.bedTimeMs?.let { formatClock(it, zone) }
+            val wake = night.wakeTimeMs?.let { formatClock(it, zone) }
+            if (bed != null && wake != null) {
+                DetailRow(stringResource(R.string.insights_detail_bedwake), "$bed – $wake")
+            }
+            night.timeInBedMin?.let { DetailRow(stringResource(R.string.insights_detail_timeinbed), formatHoursMin(it)) }
+            val deep = night.deepPct?.let { "${it.roundToInt()}%" }
+            val rem = night.remPct?.let { "${it.roundToInt()}%" }
+            if (deep != null || rem != null) {
+                DetailRow(
+                    stringResource(R.string.insights_detail_stages),
+                    listOfNotNull(
+                        deep?.let { stringResource(R.string.insights_detail_deep, it) },
+                        rem?.let { stringResource(R.string.insights_detail_rem, it) },
+                    ).joinToString(" · "),
+                )
+            }
+            night.wasoMin?.let { DetailRow(stringResource(R.string.insights_detail_waso), "$it min") }
+        }
+    }
+}
+
+@Composable
+private fun DetailRow(
+    label: String,
+    value: String,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f),
+        )
+        Text(
+            value,
+            style = MaterialTheme.typography.bodySmall,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
+}
+
+private fun shortWeekday(epochDay: Long): String {
+    val dow = java.time.LocalDate.ofEpochDay(epochDay).dayOfWeek.value // 1=Mon
+    return when (dow) {
+        1 -> "Mon"
+        2 -> "Tue"
+        3 -> "Wed"
+        4 -> "Thu"
+        5 -> "Fri"
+        6 -> "Sat"
+        else -> "Sun"
+    }
+}
+
+private fun fullDate(epochDay: Long): String {
+    val date = java.time.LocalDate.ofEpochDay(epochDay)
+    val today = java.time.LocalDate.now()
+    val label =
+        when (date) {
+            today -> "Today"
+            today.minusDays(1) -> "Yesterday"
+            else -> shortWeekday(epochDay)
+        }
+    return "$label, ${date.month.name.lowercase().replaceFirstChar { it.uppercase() }} ${date.dayOfMonth}"
+}
+
+private fun formatHoursMin(totalMin: Int): String {
+    val h = totalMin / 60
+    val m = totalMin % 60
+    return "${h}h ${"%02d".format(m)}m"
+}
+
+private fun formatClock(
+    epochMs: Long,
+    zone: java.time.ZoneId,
+): String {
+    val t = java.time.Instant.ofEpochMilli(epochMs).atZone(zone).toLocalTime()
+    val hour12 =
+        when {
+            t.hour == 0 -> 12
+            t.hour > 12 -> t.hour - 12
+            else -> t.hour
+        }
+    val ampm = if (t.hour < 12) "AM" else "PM"
+    return "$hour12:${"%02d".format(t.minute)} $ampm"
+}
+
+private const val SLEEP_CHART_NIGHTS = 7
+
+// ---------------------------------------------------------------------------
+// Steps section
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun StepsSectionCard(
+    insights: InsightsData,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ),
+    ) {
+        Column(Modifier.padding(20.dp)) {
+            val days = insights.stepDays
+            if (days.isEmpty()) {
+                Text(
+                    stringResource(R.string.insights_steps_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                return@Column
+            }
+            // Header: today big, 7-day average beside it.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    insights.stepsToday?.let { formatStepsLong(it) } ?: "–",
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.width(8.dp))
+                Column {
+                    Text(
+                        stringResource(R.string.insights_steps_today),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    insights.steps7DayAvg?.let { avg ->
+                        Text(
+                            stringResource(R.string.insights_steps_avg, formatStepsLong(avg.roundToInt())),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+                Spacer(Modifier.weight(1f))
+                insights.distanceTodayM?.let { meters ->
+                    Column(horizontalAlignment = Alignment.End) {
+                        Text(
+                            "%.1f".format(meters / 1000),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            stringResource(R.string.insights_steps_km),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            var selected by remember { mutableStateOf<Int?>(null) }
+            val maxSteps = days.maxOf { it.steps }.coerceAtLeast(1L)
+            val stops = AuroraBrushes.heroStops(LocalAuroraDark.current)
+            val avg = insights.steps7DayAvg
+            val bars =
+                days.map { day ->
+                    val vsAvg = avg?.let { if (it > 0) day.steps / it else null }
+                    DayBar(
+                        dayLabel = shortWeekday(day.epochDay),
+                        valueLabel = formatStepsShort(day.steps),
+                        fraction = (day.steps.toFloat() / maxSteps).coerceIn(0f, 1f),
+                        color =
+                            when {
+                                vsAvg == null -> stops[0]
+                                vsAvg >= 1f -> stops[0]
+                                vsAvg >= 0.5f -> lerp(stops[0], stops[2], ((1f - vsAvg) * 2).coerceIn(0f, 1f))
+                                else -> stops[3]
+                            },
+                        hasData = true,
+                    )
+                }
+            InteractiveDayBars(bars = bars, selectedIndex = selected, onSelect = { selected = it })
+            val detail = selected?.let { days.getOrNull(it) }
+            if (detail != null) {
+                Spacer(Modifier.height(12.dp))
+                StepsDayDetail(day = detail, avg = avg)
+            }
+        }
+    }
+}
+
+@Composable
+private fun StepsDayDetail(
+    day: com.sreecharan.stressrelief.data.health.StepDay,
+    avg: Double?,
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+    ) {
+        Column(Modifier.padding(14.dp)) {
+            Text(
+                fullDate(day.epochDay),
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.height(8.dp))
+            DetailRow(stringResource(R.string.insights_detail_steps), formatStepsLong(day.steps))
+            day.distanceMeters?.let {
+                DetailRow(stringResource(R.string.insights_detail_distance), "%.2f".format(it / 1000) + " km")
+            }
+            if (avg != null && avg > 0) {
+                val pct = ((day.steps - avg) / avg * 100).roundToInt()
+                val verdict =
+                    when {
+                        pct >= 10 -> stringResource(R.string.insights_steps_above_avg, pct)
+                        pct <= -10 -> stringResource(R.string.insights_steps_below_avg, -pct)
+                        else -> stringResource(R.string.insights_steps_near_avg)
+                    }
+                DetailRow(stringResource(R.string.insights_detail_vs_avg), verdict)
+            }
+        }
+    }
+}
+
+private fun formatStepsLong(steps: Long): String = "%,d".format(steps)
+
+private fun formatStepsShort(steps: Long): String =
+    when {
+        steps >= 1000 -> "%.1fk".format(steps / 1000f)
+        else -> "$steps"
+    }
+
+// ---------------------------------------------------------------------------
+// Recommendations section
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun RecommendationsList(
+    recommendations: List<com.sreecharan.stressrelief.data.model.Recommendation>,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        recommendations.forEach { rec ->
+            RecommendationRow(recommendation = rec)
+        }
+    }
+}
+
+@Composable
+private fun RecommendationRow(
+    recommendation: com.sreecharan.stressrelief.data.model.Recommendation,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            ),
+    ) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(AuraGradients.dawn()),
+                contentAlignment = Alignment.Center,
+            ) {
+                val darkTheme = LocalAuroraDark.current
+                Icon(
+                    recommendation.kind.icon(),
+                    contentDescription = null,
+                    tint = if (darkTheme) Color.White else Color(0xFF002021),
+                    modifier = Modifier.size(22.dp),
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    recommendation.title,
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    recommendation.body,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.height(6.dp))
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+                ) {
+                    Text(
+                        "${recommendation.metricLabel}: ${recommendation.metricValue}",
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun com.sreecharan.stressrelief.data.model.RecommendationKind.icon() =
+    when (this) {
+        com.sreecharan.stressrelief.data.model.RecommendationKind.SLEEP -> Icons.Filled.Bedtime
+        com.sreecharan.stressrelief.data.model.RecommendationKind.ACTIVITY ->
+            Icons.AutoMirrored.Filled.DirectionsWalk
+        com.sreecharan.stressrelief.data.model.RecommendationKind.RECOVERY -> Icons.Filled.Favorite
+        com.sreecharan.stressrelief.data.model.RecommendationKind.BREATHING -> Icons.Filled.Air
+    }
+
 @Composable
 private fun InsightRow(
     label: String,
@@ -533,53 +1078,6 @@ private fun InsightRow(
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.onSurface,
         )
-    }
-}
-
-/**
- * Last-14-night sleep score bars on the dawn scale: teal (high) to pink
- * (low). Nights with no score draw a faint stub; missing data is never
- * scored as zero.
- */
-@Composable
-private fun SleepScoreBars(
-    nights: List<SleepNightScore>,
-    modifier: Modifier = Modifier,
-) {
-    val stops = AuroraBrushes.heroStops(LocalAuroraDark.current)
-    val trackColor = MaterialTheme.colorScheme.surfaceVariant
-    val context = LocalContext.current
-    val cd = remember { context.getString(R.string.insights_sleep_bars_cd) }
-    Canvas(
-        modifier
-            .semantics { contentDescription = cd },
-    ) {
-        val width = size.width
-        val height = size.height
-        val count = nights.size.coerceAtLeast(1)
-        val slot = width / count
-        val barW = (slot * 0.55f).coerceAtLeast(4.dp.toPx())
-        nights.forEachIndexed { i, night ->
-            val cx = slot * i + slot / 2
-            val score = night.score
-            if (score == null) {
-                drawRoundRect(
-                    color = trackColor,
-                    topLeft = Offset(cx - barW / 2, height - 6.dp.toPx()),
-                    size = Size(barW, 6.dp.toPx()),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(3.dp.toPx()),
-                )
-            } else {
-                val fraction = (score / 100f).coerceIn(0f, 1f)
-                val barH = (height * fraction).coerceAtLeast(6.dp.toPx())
-                drawRoundRect(
-                    color = lerp(stops[3], stops[0], fraction),
-                    topLeft = Offset(cx - barW / 2, height - barH),
-                    size = Size(barW, barH),
-                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(4.dp.toPx()),
-                )
-            }
-        }
     }
 }
 
@@ -633,6 +1131,12 @@ private fun HeartSectionCard(
                     ZBadge(z = z)
                 }
             }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                rhrVerdict(today = today, baseline = baseline, z = insights.restingHrZ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             val slope = insights.restingHrTrendBpmPerDay
             if (slope != null) {
                 Spacer(Modifier.height(12.dp))
@@ -657,6 +1161,29 @@ private fun HeartSectionCard(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun rhrVerdict(
+    today: Int,
+    baseline: Float,
+    z: Float?,
+): String {
+    val delta = today - baseline.roundToInt()
+    val pct = if (baseline > 0) ((today - baseline) / baseline * 100).roundToInt() else 0
+    return when {
+        z != null && z >= 3f ->
+            stringResource(R.string.insights_rhr_verdict_extreme, pct)
+        z != null && z >= 1.5f ->
+            stringResource(R.string.insights_rhr_verdict_elevated, pct)
+        z != null && z <= -1.5f ->
+            stringResource(R.string.insights_rhr_verdict_low, -pct)
+        delta >= 3 ->
+            stringResource(R.string.insights_rhr_verdict_slightly_high, delta)
+        delta <= -3 ->
+            stringResource(R.string.insights_rhr_verdict_slightly_low, -delta)
+        else -> stringResource(R.string.insights_rhr_verdict_normal)
     }
 }
 

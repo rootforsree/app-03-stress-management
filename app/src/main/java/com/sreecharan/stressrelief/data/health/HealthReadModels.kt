@@ -54,6 +54,23 @@ data class HrvDay(
 )
 
 /**
+ * One day of step/distance totals, already deduped across writers.
+ *
+ * Data-quality rule (from real-world Health Connect behavior): Samsung
+ * Health writes 2 identical rows per day per device UUID and Google Fit
+ * writes its own copy, so raw step counts come back ~3x inflated. The
+ * repository collapses to one row per day (max per writer, then max across
+ * writers). Distance in meters is the more reliable signal and is preferred
+ * wherever both exist.
+ */
+data class StepDay(
+    val epochDay: Long,
+    val steps: Long,
+    /** Null when no writer supplied distance for the day. */
+    val distanceMeters: Double?,
+)
+
+/**
  * Minute-level asleep/awake strip for one local calendar day.
  * [asleep][i] is true when minute-of-day i was spent asleep.
  */
@@ -66,3 +83,14 @@ class SleepDayStrip(
 
     override fun hashCode(): Int = 31 * epochDay.hashCode() + asleep.contentHashCode()
 }
+
+/**
+ * One raw step/distance record as read from Health Connect, before dedup.
+ * Framework-free so the collapse rule stays unit-testable.
+ */
+data class StepSourceEntry(
+    val epochDay: Long,
+    val packageName: String,
+    val steps: Long,
+    val distanceMeters: Double,
+)

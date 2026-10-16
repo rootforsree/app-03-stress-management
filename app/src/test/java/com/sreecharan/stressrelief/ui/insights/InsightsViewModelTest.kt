@@ -52,6 +52,8 @@ class InsightsViewModelTest {
                         architectureScore = 70,
                         continuityScore = 85,
                         latencyScore = 90,
+                        bedTimeMs = null,
+                        wakeTimeMs = null,
                     )
                 },
             sleepDebtHours = 2.5f,
@@ -79,6 +81,11 @@ class InsightsViewModelTest {
                         kind = InsightKind.RECOVERY,
                     ),
                 ),
+            recommendations = emptyList(),
+            stepDays = emptyList(),
+            stepsToday = null,
+            steps7DayAvg = null,
+            distanceTodayM = null,
             calibrating = false,
             healthConnected = false,
         )

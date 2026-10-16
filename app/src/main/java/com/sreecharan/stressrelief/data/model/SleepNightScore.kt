@@ -16,6 +16,10 @@ data class SleepNightScore(
     val wasoMin: Int?,
     val awakenings: Int?,
     val latencyMin: Int?,
+    /** When sleep onset was detected, epoch ms. Null when unknown. */
+    val bedTimeMs: Long?,
+    /** When the session ended, epoch ms. Null when unknown. */
+    val wakeTimeMs: Long?,
     /** 0..100 composite, null when the night cannot be scored. */
     val score: Int?,
     val durationScore: Int?,
