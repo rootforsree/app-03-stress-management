@@ -864,7 +864,7 @@ private fun StepsSectionCard(
                     )
                     insights.steps7DayAvg?.let { avg ->
                         Text(
-                            stringResource(R.string.insights_steps_avg, formatStepsLong(avg.roundToInt())),
+                            stringResource(R.string.insights_steps_avg, formatStepsLong(avg.roundToLong())),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
