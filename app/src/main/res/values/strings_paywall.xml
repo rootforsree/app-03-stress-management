@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Paywall -->
+    <string name="paywall_title">Aura Premium</string>
+    <string name="paywall_subtitle">Deeper calm for less than a coffee a month.</string>
+    <string name="paywall_feature_insights">Advanced insights and correlations</string>
+    <string name="paywall_feature_sleep">Premium sleep soundscapes</string>
+    <string name="paywall_feature_ai">Unlimited AI companion</string>
+    <string name="paywall_feature_cbt">Full CBT exercise library</string>
+    <string name="paywall_trial_note">3-day free trial, then %1$s. Cancel anytime.</string>
+    <string name="paywall_lifetime_note">One payment. Yours forever.</string>
+    <string name="paywall_best_value">Best value</string>
+    <string name="paywall_lifetime_badge">One-time</string>
+    <string name="paywall_cta">Continue</string>
+    <string name="paywall_restore">Restore purchase</string>
+    <string name="paywall_restore_none">No active subscription found on this account.</string>
+    <string name="paywall_retry">Try again</string>
+    <string name="paywall_loading_plans">Loading plans…</string>
+    <string name="paywall_terms">Payment is charged to your Google Play account. Subscriptions renew automatically unless cancelled at least 24 hours before the period ends.</string>
+    <string name="paywall_close">Close</string>
+
+    <!-- Billing unavailable (no API key) -->
+    <string name="paywall_unavailable_title">Premium is unavailable</string>
+    <string name="paywall_unavailable_body">Purchases are not configured in this build. Everything in the free tier keeps working.</string>
+    <string name="paywall_unavailable_cta">Go back</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_reminders">Reminders</string>
+    <string name="notif_channel_reminders_desc">Morning check-ins, streak nudges, and wind-down prompts.</string>
+    <string name="notif_morning_title">Good morning</string>
+    <string name="notif_morning_body">Take 10 seconds to check in with yourself. Your streak is counting on it.</string>
+    <string name="notif_nudge_title">Your streak needs you</string>
+    <string name="notif_nudge_body">No check-in yet today. One breath, one tap, streak saved.</string>
+    <string name="notif_winddown_title">Time to wind down</string>
+    <string name="notif_winddown_body">Put the day away. A short breathing session sets up better sleep.</string>
+
+    <!-- Widget -->
+    <string name="widget_desc">Today\'s stress score and your current streak, with quick actions.</string>
+    <string name="widget_stress_title">Stress</string>
+    <string name="widget_action_mood">Log mood</string>
+    <string name="widget_action_breathe">Breathe</string>
+    <string name="widget_streak_one">day streak</string>
+    <string name="widget_streak_many">days streak</string>
+</resources>

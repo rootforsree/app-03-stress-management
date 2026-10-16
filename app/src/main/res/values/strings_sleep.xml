@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sleep mixer -->
+    <string name="sleep_title">Wind down</string>
+    <string name="sleep_subtitle">Mix your own soundscape, set a timer, drift off.</string>
+    <string name="sleep_section_sounds">Soundscape</string>
+    <string name="sleep_section_timer">Sleep timer</string>
+    <string name="sleep_timer_infinite">No timer</string>
+    <string name="sleep_timer_minutes">%1$d min</string>
+    <string name="sleep_begin">Begin wind-down</string>
+    <string name="sleep_begin_hint">Turn on at least one sound to begin.</string>
+    <string name="sleep_premium_badge">Premium</string>
+    <string name="sleep_premium_upsell_title">Unlock premium soundscapes</string>
+    <string name="sleep_premium_upsell_body">Forest, thunderstorm, and fireplace mixes, crafted for deep sleep.</string>
+    <string name="sleep_premium_upsell_cta">See plans</string>
+    <string name="sleep_layer_locked_cd">%1$s, premium sound, opens upgrade</string>
+
+    <string name="sleep_sound_rain">Rain</string>
+    <string name="sleep_sound_rain_desc">Steady rainfall on leaves</string>
+    <string name="sleep_sound_ocean">Ocean</string>
+    <string name="sleep_sound_ocean_desc">Slow waves rolling in</string>
+    <string name="sleep_sound_white">White noise</string>
+    <string name="sleep_sound_white_desc">Even hiss that masks the world</string>
+    <string name="sleep_sound_brown">Brown noise</string>
+    <string name="sleep_sound_brown_desc">Deep, low rumble</string>
+    <string name="sleep_sound_chime">Chime pads</string>
+    <string name="sleep_sound_chime_desc">Soft drifting tones</string>
+    <string name="sleep_sound_forest">Forest</string>
+    <string name="sleep_sound_forest_desc">Birdsong over soft wind</string>
+    <string name="sleep_sound_thunderstorm">Thunderstorm</string>
+    <string name="sleep_sound_thunderstorm_desc">Distant rumble and rain</string>
+    <string name="sleep_sound_fireplace">Fireplace</string>
+    <string name="sleep_sound_fireplace_desc">Warm crackle and glow</string>
+
+    <!-- Active sleep session -->
+    <string name="sleep_session_title">Winding down</string>
+    <string name="sleep_session_stop">End session</string>
+    <string name="sleep_session_playing">Playing</string>
+    <string name="sleep_session_no_timer">No timer — playing until you stop it</string>
+    <string name="sleep_session_time_placeholder">--:--</string>
+</resources>

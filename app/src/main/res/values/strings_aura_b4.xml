@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Strings for Builder 4's areas: home, mood check-in, journal, insights.
+  Additive file; Builder 1 owns res/values/strings.xml. The b4_ prefix avoids
+  resource-name collisions with other builders. The integrator may merge.
+-->
+<resources>
+    <!-- Shared (b4 = builder 4) -->
+    <string name="b4_action_retry">Retry</string>
+    <string name="b4_action_save">Save</string>
+    <string name="b4_action_back">Back</string>
+
+    <!-- Home -->
+    <string name="home_settings_desc">Settings</string>
+    <string name="home_stress_title">Your stress score</string>
+    <string name="home_refresh_score_desc">Refresh stress score</string>
+    <string name="home_no_factors">Check in to sharpen this score.</string>
+    <string name="home_score_loading">Reading your signals…</string>
+    <string name="home_score_out_of_100">out of 100</string>
+    <string name="home_stress_score_cd">Stress score %1$d out of 100</string>
+    <string name="home_bloom_cd">Streak bloom with %1$d petals</string>
+    <string name="home_health_title">Connect Health</string>
+    <string name="home_health_body">Share resting heart rate and sleep with Aura to sharpen your stress score. Your health data never leaves your phone.</string>
+    <string name="home_health_cta">Connect Health</string>
+    <string name="home_streak_sub">Keep the bloom growing. One calm moment a day.</string>
+    <string name="home_quick_actions">Quick actions</string>
+    <string name="home_action_checkin">Check in</string>
+    <string name="home_action_checkin_desc">Log your mood</string>
+    <string name="home_action_breathe">Breathe</string>
+    <string name="home_action_breathe_desc">Start a breathing exercise</string>
+    <string name="home_action_journal">Journal</string>
+    <string name="home_action_journal_desc">Write a journal entry</string>
+    <string name="home_action_winddown">Wind down</string>
+    <string name="home_action_winddown_desc">Start your wind-down</string>
+    <string name="home_today">Today</string>
+    <string name="home_today_checkin">Mood check-in</string>
+    <string name="home_today_done">Done</string>
+    <string name="home_today_pending">Pending</string>
+    <string name="home_today_calm">Calm minutes</string>
+    <string name="home_today_calm_value">%1$d min total</string>
+    <string name="home_today_journal">Journal</string>
+    <string name="home_insights_title">Insights</string>
+    <string name="home_insights_sub">Your mood patterns, decoded.</string>
+    <string name="home_insights_premium_desc">Premium feature</string>
+    <string name="home_loading">Loading your dashboard…</string>
+
+    <!-- Mood check-in -->
+    <string name="mood_title">How are you right now?</string>
+    <string name="mood_subtitle">Ten seconds. One tap is enough.</string>
+    <string name="mood_1_label">Rough</string>
+    <string name="mood_2_label">Low</string>
+    <string name="mood_3_label">Okay</string>
+    <string name="mood_4_label">Good</string>
+    <string name="mood_5_label">Great</string>
+    <string name="mood_activities_label">What is shaping your day?</string>
+    <string name="mood_activity_work">Work</string>
+    <string name="mood_activity_sleep">Sleep</string>
+    <string name="mood_activity_exercise">Exercise</string>
+    <string name="mood_activity_social">Social</string>
+    <string name="mood_activity_food">Food</string>
+    <string name="mood_activity_rest">Rest</string>
+    <string name="mood_activity_outdoors">Outdoors</string>
+    <string name="mood_activity_mindfulness">Mindfulness</string>
+    <string name="mood_note_label">Note (optional)</string>
+    <string name="mood_note_placeholder">One line about right now…</string>
+    <string name="mood_save">Save check-in</string>
+    <string name="mood_face_cd">%1$s, %2$d out of 5</string>
+
+    <!-- Journal -->
+    <string name="journal_title">Journal</string>
+    <string name="journal_new_desc">New journal entry</string>
+    <string name="journal_delete_desc">Delete entry</string>
+    <string name="journal_loading">Loading your journal…</string>
+    <string name="journal_empty_title">A blank page is waiting</string>
+    <string name="journal_empty_sub">Two minutes of writing can untangle a whole day.</string>
+    <string name="journal_empty_cta">Write your first entry</string>
+    <string name="journal_new_title">New entry</string>
+    <string name="journal_edit_title">Edit entry</string>
+    <string name="journal_prompt_label">Today\u2019s prompt</string>
+    <string name="journal_editor_placeholder">Let it out. No one is grading this.</string>
+
+    <!-- Insights -->
+    <string name="insights_title">Insights</string>
+    <string name="insights_loading">Crunching your patterns…</string>
+    <string name="insights_upsell_title">Unlock Insights</string>
+    <string name="insights_upsell_sub">See what your moods are trying to tell you: trends, pixels, and patterns.</string>
+    <string name="insights_delta_empty">Not enough check-ins yet</string>
+    <string name="insights_delta_up">Mood trending up (+%1$.1f)</string>
+    <string name="insights_delta_down">Mood trending down (%1$.1f)</string>
+    <string name="insights_delta_flat">Mood holding steady</string>
+    <string name="insights_trend_title">Mood trend</string>
+    <string-array name="insights_weekday_labels">
+        <item>M</item>
+        <item>T</item>
+        <item>W</item>
+        <item>T</item>
+        <item>F</item>
+        <item>S</item>
+        <item>S</item>
+    </string-array>
+    <string name="insights_trend_start">30 days ago</string>
+    <string name="insights_trend_end">Today</string>
+    <string name="insights_trend_empty">Log a few check-ins and your trend line will appear here.</string>
+    <string name="insights_pixels_title">Pixels \u2014 %1$s</string>
+    <string name="insights_correlations_title">What moves your mood</string>
+    <string name="insights_activities_title">Mood by activity</string>
+    <string name="insights_activities_empty">Tag activities on check-ins to see what lifts you.</string>
+    <string name="insights_sleep_title">Sleep \u00d7 mood</string>
+    <string name="insights_sleep_empty">Log sleep sessions to unlock this pattern.</string>
+    <string name="insights_sleep_values">With sleep: %1$s avg \u00b7 Without: %2$s avg</string>
+    <string name="insights_consistency_sub">of the last 30 days you checked in. Small steps, real signal.</string>
+</resources>

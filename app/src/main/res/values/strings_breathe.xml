@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Breathe tab -->
+    <string name="breathe_title">Breathe</string>
+    <string name="breathe_subtitle">Pick a goal and follow the orb</string>
+    <string name="breathe_goal_calm">Calm</string>
+    <string name="breathe_goal_calm_sub">Unwind and soften tension</string>
+    <string name="breathe_goal_sleep">Sleep</string>
+    <string name="breathe_goal_sleep_sub">Slow down for deep rest</string>
+    <string name="breathe_goal_focus">Focus</string>
+    <string name="breathe_goal_focus_sub">Sharpen a scattered mind</string>
+    <string name="breathe_goal_sos">SOS</string>
+    <string name="breathe_goal_sos_sub">Steady yourself, right now</string>
+    <string name="breathe_recommended">Recommended</string>
+    <string name="breathe_picker_title">%1$s patterns</string>
+    <string name="breathe_pattern_timing_full">%1$d sec in · %2$d sec hold · %3$d sec out</string>
+    <string name="breathe_pattern_timing_no_hold">%1$d sec in · %2$d sec out</string>
+    <string name="breathe_pattern_rounds">%1$d rounds</string>
+    <string name="breathe_retry">Try again</string>
+
+    <!-- Breathing session -->
+    <string name="session_get_ready">Get comfortable…</string>
+    <string name="session_close">Close</string>
+    <string name="phase_inhale">Breathe in…</string>
+    <string name="phase_hold">Hold</string>
+    <string name="phase_exhale">Breathe out</string>
+    <string name="phase_hold_after">Rest</string>
+    <string name="session_round">Round %1$d of %2$d</string>
+    <string name="session_pause">Pause</string>
+    <string name="session_resume">Resume</string>
+    <string name="session_end">End session</string>
+    <string name="session_end_early_title">End session early?</string>
+    <string name="session_end_early_message">Your progress so far will be saved as a partial session.</string>
+    <string name="session_end_early_confirm">End</string>
+    <string name="session_end_early_cancel">Keep going</string>
+    <string name="session_orb_desc">Breathing orb</string>
+    <string name="session_celebration_title">Beautifully done</string>
+    <string name="session_celebration_sub">%1$d calm minutes banked</string>
+
+    <!-- Programs -->
+    <string name="programs_title">Programs</string>
+    <string name="programs_subtitle">Seven days, one small practice a day</string>
+    <string name="programs_days_done">%1$d of 7 days</string>
+    <string name="program_day">Day %1$d</string>
+    <string name="program_day_minutes">%1$d min</string>
+    <string name="program_day_start">Start</string>
+    <string name="program_day_done">Done</string>
+    <string name="program_day_locked">Locked</string>
+    <string name="programs_error_title">Could not load programs</string>
+    <string name="programs_error_message">Check your connection and try again.</string>
+</resources>

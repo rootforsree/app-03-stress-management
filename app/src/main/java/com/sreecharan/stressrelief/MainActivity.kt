@@ -1,0 +1,86 @@
+package com.sreecharan.stressrelief
+
+import android.content.Intent
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import com.sreecharan.stressrelief.data.model.ThemeMode
+import com.sreecharan.stressrelief.navigation.AppNavHost
+import com.sreecharan.stressrelief.ui.paywall.BillingGate
+import com.sreecharan.stressrelief.ui.paywall.PaywallLaunchContext
+import com.sreecharan.stressrelief.ui.theme.AppThemeUiState
+import com.sreecharan.stressrelief.ui.theme.AppThemeViewModel
+import com.sreecharan.stressrelief.ui.theme.AuraTheme
+import com.sreecharan.stressrelief.ui.theme.LocalAuroraDark
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+
+/**
+ * Single activity, edge-to-edge. Applies the Aurora theme from
+ * [AppThemeViewModel] and hosts the root [AppNavHost]. Deep-link intents
+ * (aura://mood, aura://breathe) are forwarded to the NavController both on
+ * cold start and while the activity is alive (singleTask).
+ */
+@AndroidEntryPoint
+class MainActivity : ComponentActivity() {
+
+    @Inject lateinit var paywallLaunchContext: PaywallLaunchContext
+
+    private var navControllerRef: NavHostController? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContent {
+            val themeViewModel: AppThemeViewModel = hiltViewModel()
+            val themeState by themeViewModel.uiState.collectAsStateWithLifecycle()
+            val onboardingCompleted by themeViewModel.onboardingCompleted.collectAsStateWithLifecycle()
+            val systemDark = isSystemInDarkTheme()
+
+            val darkTheme = when (val state = themeState) {
+                is AppThemeUiState.Ready -> when (state.themeMode) {
+                    ThemeMode.LIGHT -> false
+                    ThemeMode.DARK -> true
+                    ThemeMode.SYSTEM -> systemDark
+                }
+                AppThemeUiState.Loading -> systemDark
+            }
+            val dynamicColor = (themeState as? AppThemeUiState.Ready)?.dynamicColor ?: false
+
+            AuraTheme(darkTheme = darkTheme, dynamicColor = dynamicColor) {
+                CompositionLocalProvider(LocalAuroraDark provides darkTheme) {
+                    // Cold-start gate: neutral splash until RevenueCat reports
+                    // the real entitlement; free tier keeps working when
+                    // billing is unconfigured (Unavailable -> not premium).
+                    BillingGate {
+                        val navController = rememberNavController()
+                        LaunchedEffect(navController) {
+                            navControllerRef = navController
+                            navController.handleDeepLink(intent)
+                        }
+                        AppNavHost(
+                            navController = navController,
+                            onboardingCompleted = onboardingCompleted,
+                            paywallLaunchContext = paywallLaunchContext,
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        navControllerRef?.handleDeepLink(intent)
+    }
+}

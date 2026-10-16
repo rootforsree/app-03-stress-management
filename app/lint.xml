@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- API 37 is not vetted for this template yet; 36 is the intentional,
+         tested targetSdk. Revisit once 37 behavior changes are reviewed. -->
+    <issue id="OldTargetApi" severity="ignore" />
+    <!-- Dependency updates are managed by Dependabot; failing the build on
+         every upstream release would break CI for no reason. -->
+    <issue id="AndroidGradlePluginVersion" severity="ignore" />
+    <issue id="GradleDependency" severity="ignore" />
+    <issue id="NewerVersionAvailable" severity="ignore" />
+</lint>

@@ -1,0 +1,189 @@
+package com.sreecharan.stressrelief.ui.sleep
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.compose.runtime.Immutable
+import com.sreecharan.stressrelief.data.billing.BillingRepository
+import com.sreecharan.stressrelief.data.billing.EntitlementState
+import com.sreecharan.stressrelief.ui.paywall.PaywallLaunchContext
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@Immutable
+data class SleepLayerUiState(
+    val layer: SleepSoundLayer,
+    val isEnabled: Boolean,
+    val volume: Float,
+    /** False when the layer is premium and the user is not premium. */
+    val isUnlocked: Boolean,
+)
+
+@Immutable
+sealed interface SleepUiState {
+    data object Loading : SleepUiState
+
+    data class Content(
+        val layers: ImmutableList<SleepLayerUiState> = persistentListOf(),
+        /** Null = infinite. */
+        val timerMinutes: Int? = 30,
+        val isPremium: Boolean = false,
+        val billingLoading: Boolean = true,
+        val canBegin: Boolean = false,
+    ) : SleepUiState
+
+    companion object {
+        val TIMER_OPTIONS: List<Int?> = listOf(15, 30, 45, 60, null)
+    }
+}
+
+sealed interface SleepEvent {
+    data object NavigateToSession : SleepEvent
+
+    /** A locked premium layer (or the upsell card) was tapped. */
+    data object OpenPaywall : SleepEvent
+}
+
+/**
+ * Sleep mixer screen: toggleable generated sound layers with per-layer
+ * volume, a timer picker, and the "Begin wind-down" entry to the session.
+ */
+@HiltViewModel
+class SleepViewModel
+    @Inject
+    constructor(
+        private val billing: BillingRepository,
+        private val sessionConfig: SleepSessionConfig,
+        private val paywallLaunchContext: PaywallLaunchContext,
+    ) : ViewModel() {
+        private val _uiState = MutableStateFlow<SleepUiState>(SleepUiState.Loading)
+        val uiState: StateFlow<SleepUiState> = _uiState.asStateFlow()
+
+        private val _events = Channel<SleepEvent>(Channel.BUFFERED)
+        val events = _events.receiveAsFlow()
+
+        /** Applies the transform to the Content branch; no-op while Loading. */
+        private fun updateContent(transform: (SleepUiState.Content) -> SleepUiState.Content) {
+            val current = _uiState.value as? SleepUiState.Content ?: return
+            _uiState.value = transform(current)
+        }
+
+        init {
+            _uiState.value =
+                SleepUiState.Content(
+                    layers =
+                        SleepSoundLayers.ALL.map { layer ->
+                            SleepLayerUiState(
+                                layer = layer,
+                                isEnabled = layer.id == "rain",
+                                volume = 0.7f,
+                                isUnlocked = !layer.isPremium,
+                            )
+                        }.toImmutableList(),
+                )
+            viewModelScope.launch {
+                billing.entitlement.collect { state ->
+                    when (state) {
+                        is EntitlementState.Ready -> {
+                            applyPremium(state.isPremium, loading = false)
+                        }
+                        EntitlementState.Loading -> {
+                            applyPremium(isPremium = false, loading = true)
+                        }
+                        EntitlementState.Unavailable -> {
+                            applyPremium(isPremium = false, loading = false)
+                        }
+                    }
+                }
+            }
+            refreshCanBegin()
+        }
+
+        fun onLayerToggled(layerId: String, enabled: Boolean) {
+            val current = _uiState.value as? SleepUiState.Content ?: return
+            val target = current.layers.find { it.layer.id == layerId } ?: return
+            if (enabled && !target.isUnlocked) {
+                openPaywall()
+                return
+            }
+            updateContent { state ->
+                state.copy(
+                    layers =
+                        state.layers.map {
+                            if (it.layer.id == layerId) it.copy(isEnabled = enabled) else it
+                        }.toImmutableList(),
+                )
+            }
+            refreshCanBegin()
+        }
+
+        fun onVolumeChanged(layerId: String, volume: Float) {
+            updateContent { state ->
+                state.copy(
+                    layers =
+                        state.layers.map {
+                            if (it.layer.id == layerId) {
+                                it.copy(volume = volume.coerceIn(0f, 1f))
+                            } else {
+                                it
+                            }
+                        }.toImmutableList(),
+                )
+            }
+        }
+
+        fun onTimerSelected(timerMinutes: Int?) {
+            updateContent { it.copy(timerMinutes = timerMinutes) }
+        }
+
+        fun onPremiumUpsellClicked() {
+            openPaywall()
+        }
+
+        fun onBeginClicked() {
+            val state = _uiState.value as? SleepUiState.Content ?: return
+            val enabled =
+                state.layers
+                    .filter { it.isEnabled && it.isUnlocked }
+                    .associate { it.layer.id to it.volume }
+            if (enabled.isEmpty()) return
+            sessionConfig.layers = enabled
+            sessionConfig.timerMinutes = state.timerMinutes
+            viewModelScope.launch { _events.send(SleepEvent.NavigateToSession) }
+        }
+
+        private fun openPaywall() {
+            paywallLaunchContext.launchFromPremiumFeature()
+            viewModelScope.launch { _events.send(SleepEvent.OpenPaywall) }
+        }
+
+        private fun applyPremium(isPremium: Boolean, loading: Boolean) {
+            updateContent { state ->
+                state.copy(
+                    isPremium = isPremium,
+                    billingLoading = loading,
+                    layers =
+                        state.layers.map {
+                            it.copy(isUnlocked = !it.layer.isPremium || isPremium)
+                        }.toImmutableList(),
+                )
+            }
+            refreshCanBegin()
+        }
+
+        private fun refreshCanBegin() {
+            updateContent { state ->
+                state.copy(
+                    canBegin = state.layers.any { it.isEnabled && it.isUnlocked },
+                )
+            }
+        }
+    }
