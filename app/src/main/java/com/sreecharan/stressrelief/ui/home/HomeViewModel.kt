@@ -107,6 +107,18 @@ object HomeStats {
     ): Boolean = Instant.ofEpochMilli(timestampMs).atZone(zone).toLocalDate() == LocalDate.now(zone)
 }
 
+/**
+ * Intermediate holder: kotlinx-coroutines only ships typed [combine]
+ * overloads up to five flows, so the dashboard combine runs in two stages.
+ */
+private data class HomePartial(
+    val score: StressScore?,
+    val todayCheckIn: MoodCheckIn?,
+    val streakDays: Int,
+    val calmMinutes: Int,
+    val weekHistory: List<MoodCheckIn>,
+)
+
 @HiltViewModel
 class HomeViewModel
     @Inject
@@ -163,6 +175,8 @@ class HomeViewModel
             _uiState.value = HomeUiState.Loading
             refreshStressScore()
             checkHealthConnect()
+            // kotlinx-coroutines only ships typed combine() overloads up to
+            // five flows, so the journal flow joins via a second combine.
             val contentFlow =
                 combine(
                     stressScore,
@@ -170,22 +184,28 @@ class HomeViewModel
                     wellness.observeStreakDays(),
                     wellness.observeTotalCalmMinutes(),
                     wellness.observeMoodHistory(7),
-                    wellness.observeJournalEntries(),
                 ) {
                     score: StressScore?,
                     todayCheckIn: MoodCheckIn?,
                     streakDays: Int,
                     calmMinutes: Int,
                     weekHistory: List<MoodCheckIn>,
-                    journals: List<JournalEntry>,
                     ->
+                    HomePartial(
+                        score = score,
+                        todayCheckIn = todayCheckIn,
+                        streakDays = streakDays,
+                        calmMinutes = calmMinutes,
+                        weekHistory = weekHistory,
+                    )
+                }.combine(wellness.observeJournalEntries()) { partial, journals: List<JournalEntry> ->
                     val today = LocalDate.now()
                     HomeUiState.Content(
-                        stressScore = score,
-                        streakDays = streakDays,
-                        weekDots = HomeStats.weekDots(weekHistory, today).toImmutableList(),
-                        totalCalmMinutes = calmMinutes,
-                        checkedInToday = todayCheckIn != null,
+                        stressScore = partial.score,
+                        streakDays = partial.streakDays,
+                        weekDots = HomeStats.weekDots(partial.weekHistory, today).toImmutableList(),
+                        totalCalmMinutes = partial.calmMinutes,
+                        checkedInToday = partial.todayCheckIn != null,
                         journalDoneToday = journals.any { HomeStats.isToday(it.timestampMs) },
                     )
                 }
