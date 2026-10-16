@@ -1,5 +1,7 @@
 package com.sreecharan.stressrelief.ui.breathe
 
+import android.app.Activity
+import android.view.WindowManager
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationVector1D
@@ -26,18 +28,23 @@ import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Visibility
+import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,6 +56,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -63,6 +71,8 @@ import com.sreecharan.stressrelief.ui.components.rememberReduceMotion
 import com.sreecharan.stressrelief.ui.theme.AuroraBrushes
 import com.sreecharan.stressrelief.ui.theme.LocalAuroraDark
 import com.sreecharan.stressrelief.ui.theme.MotionTokens
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 private const val ORB_INHALE_SCALE = 1.35f
@@ -80,6 +90,8 @@ private const val CONFETTI_MIN_ALPHA = 0.55f
 private const val CONFETTI_ALPHA_RANGE = 0.45f
 private const val CONFETTI_FALL_SCREENS = 1.2f
 private const val CONFETTI_RECT_SQUASH = 1.4f
+private const val EYES_CLOSED_ORB_ALPHA = 0.05f
+private const val PACE_STEPS = 14
 
 /**
  * Breathing session route. The NavHost calls this inside
@@ -99,14 +111,36 @@ fun BreathingSessionScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val haptics = LocalHapticFeedback.current
+    val toneScope = rememberCoroutineScope()
+    val tonePlayer = remember { SoftTonePlayer() }
+    var eyesClosed by remember { mutableStateOf(false) }
+
+    // Eyes-closed sessions need the screen to stay on without touch.
+    // Plain window flag, no wake-lock tricks; cleared when the screen leaves.
+    val context = LocalContext.current
+    DisposableEffect(Unit) {
+        val window = (context as? Activity)?.window
+        window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onDispose {
+            tonePlayer.release()
+            window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
+    }
+
     LaunchedEffect(programId, programDay) {
         viewModel.attachProgramContext(programId, programDay ?: -1)
     }
-    LaunchedEffect(viewModel) {
+    LaunchedEffect(viewModel, eyesClosed) {
         viewModel.events.collect { event ->
             when (event) {
                 is BreathingSessionEvent.PhaseChanged -> {
                     haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    if (eyesClosed) {
+                        val phase = event.phase
+                        toneScope.launch(Dispatchers.Default) {
+                            tonePlayer.play(phase.toneHz())
+                        }
+                    }
                 }
 
                 BreathingSessionEvent.NavigateBack -> {
@@ -117,16 +151,22 @@ fun BreathingSessionScreen(
     }
     BreathingSessionContent(
         state = state,
+        eyesClosed = eyesClosed,
+        onEyesClosedChange = { eyesClosed = it },
         onPauseResume = viewModel::onPauseResume,
         onExitEarly = viewModel::onExitEarly,
+        onPaceChange = viewModel::setPace,
     )
 }
 
 @Composable
 private fun BreathingSessionContent(
     state: BreathingSessionUiState,
+    eyesClosed: Boolean,
+    onEyesClosedChange: (Boolean) -> Unit,
     onPauseResume: () -> Unit,
     onExitEarly: () -> Unit,
+    onPaceChange: (Float) -> Unit,
 ) {
     when (state) {
         BreathingSessionUiState.Loading -> {
@@ -162,8 +202,11 @@ private fun BreathingSessionContent(
         is BreathingSessionUiState.Active -> {
             ActiveSession(
                 state = state,
+                eyesClosed = eyesClosed,
+                onEyesClosedChange = onEyesClosedChange,
                 onPauseResume = onPauseResume,
                 onExitEarly = onExitEarly,
+                onPaceChange = onPaceChange,
             )
         }
 
@@ -176,18 +219,29 @@ private fun BreathingSessionContent(
 @Composable
 private fun ActiveSession(
     state: BreathingSessionUiState.Active,
+    eyesClosed: Boolean,
+    onEyesClosedChange: (Boolean) -> Unit,
     onPauseResume: () -> Unit,
     onExitEarly: () -> Unit,
+    onPaceChange: (Float) -> Unit,
 ) {
     val darkTheme = LocalAuroraDark.current
     val reduceMotion = rememberReduceMotion()
     var showExitConfirm by remember { mutableStateOf(false) }
 
+    // Eyes-closed mode: the orb fades to near-black; haptics plus a soft
+    // tone carry the phase changes instead.
+    val orbAlpha by animateFloatAsState(
+        targetValue = if (eyesClosed) EYES_CLOSED_ORB_ALPHA else 1f,
+        label = "orbAlpha",
+    )
+
     // Orb choreography: one Animatable driven by a per-phase LaunchedEffect.
     // The high-churn scale value is read in graphicsLayer, never in
-    // composition, so the orb stays at 60fps.
+    // composition, so the orb stays at 60fps. Phase durations are wall-clock
+    // scaled by the live pace multiplier.
     val orbScale = remember { Animatable(1f) }
-    LaunchedEffect(state.phase, state.round, state.isPaused, reduceMotion) {
+    LaunchedEffect(state.phase, state.round, state.isPaused, state.pace, reduceMotion) {
         if (reduceMotion) {
             orbScale.snapTo(ORB_REST_SCALE)
             return@LaunchedEffect
@@ -199,7 +253,11 @@ private fun ActiveSession(
             } else {
                 1f
             }
-        val remainingMs = (state.phaseDurationMs - state.phaseElapsedMs).coerceAtLeast(1L).toInt()
+        val remainingMs =
+            ((state.phaseDurationMs - state.phaseElapsedMs) / state.pace)
+                .toLong()
+                .coerceAtLeast(1L)
+                .toInt()
         orbScale.animateTo(
             targetValue = target,
             animationSpec = tween(durationMillis = remainingMs, easing = FastOutSlowInEasing),
@@ -272,11 +330,30 @@ private fun ActiveSession(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f),
                 )
-                Spacer(Modifier.width(48.dp))
+                IconButton(onClick = { onEyesClosedChange(!eyesClosed) }) {
+                    Icon(
+                        imageVector = if (eyesClosed) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
+                        contentDescription =
+                            stringResource(
+                                if (eyesClosed) {
+                                    R.string.session_eyes_closed_on
+                                } else {
+                                    R.string.session_eyes_closed_off
+                                },
+                            ),
+                        tint =
+                            if (eyesClosed) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                    )
+                }
             }
             Spacer(Modifier.weight(1f))
             BreathingOrb(
                 state = state,
+                alpha = orbAlpha,
                 orbScale = orbScale,
                 orbColor1 = orbColor1,
                 orbColor2 = orbColor2,
@@ -303,6 +380,31 @@ private fun ActiveSession(
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            Spacer(Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.session_pace),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Slider(
+                    value = state.pace,
+                    onValueChange = onPaceChange,
+                    valueRange = BreathingSessionViewModel.MIN_PACE..BreathingSessionViewModel.MAX_PACE,
+                    steps = PACE_STEPS,
+                    modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
+                )
+                Text(
+                    text = stringResource(R.string.session_pace_value, state.pace),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.width(48.dp),
+                    textAlign = TextAlign.End,
+                )
+            }
             Spacer(Modifier.weight(1f))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -351,6 +453,7 @@ private fun ActiveSession(
 @Composable
 private fun BreathingOrb(
     state: BreathingSessionUiState.Active,
+    alpha: Float,
     orbScale: Animatable<Float, AnimationVector1D>,
     orbColor1: Color,
     orbColor2: Color,
@@ -363,6 +466,7 @@ private fun BreathingOrb(
         modifier =
             Modifier
                 .size(300.dp)
+                .graphicsLayer { this.alpha = alpha }
                 .semantics { contentDescription = orbDesc },
     ) {
         // Aurora halo breathing with the orb.

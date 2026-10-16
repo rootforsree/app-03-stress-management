@@ -23,7 +23,6 @@ glance = "1.2.0"
 
 # DI / data
 hilt = "2.60.1"
-revenuecat = "10.26.0"
 coroutines = "1.11.0"
 serialization = "1.11.0"
 collectionsImmutable = "0.5.2"
@@ -112,9 +111,6 @@ robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "
 # Baseline profiles / macrobenchmark (producer module only)
 benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmark" }
 uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
-
-# RevenueCat (Google Play Billing wrapper; handles trials, grace periods, restore)
-revenuecat-purchases = { group = "com.revenuecat.purchases", name = "purchases", version.ref = "revenuecat" }
 
 # Jetpack Glance (home screen widget)
 glance-appwidget = { group = "androidx.glance", name = "glance-appwidget", version.ref = "glance" }

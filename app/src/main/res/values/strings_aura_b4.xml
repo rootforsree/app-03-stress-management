@@ -44,8 +44,39 @@
     <string name="home_today_journal">Journal</string>
     <string name="home_insights_title">Insights</string>
     <string name="home_insights_sub">Your mood patterns, decoded.</string>
-    <string name="home_insights_premium_desc">Premium feature</string>
     <string name="home_loading">Loading your dashboard…</string>
+
+    <!-- Home v2 -->
+    <string name="home_greeting_morning">Good morning</string>
+    <string name="home_greeting_afternoon">Good afternoon</string>
+    <string name="home_greeting_evening">Good evening</string>
+    <string name="home_nudge_no_score">Check in to get your first score.</string>
+    <string name="home_nudge_high">Running high today. A 4-minute reset can help.</string>
+    <string name="home_nudge_moderate">Holding steady. A short reset keeps it there.</string>
+    <string name="home_nudge_low">In a good place. Nice work.</string>
+    <string name="home_hero_delta_up">Mood up %1$d vs last week</string>
+    <string name="home_hero_delta_down">Mood down %1$d vs last week</string>
+    <string name="home_hero_delta_flat">Mood holding steady this week</string>
+    <string name="home_continue_checkin_title">2-minute check-in</string>
+    <string name="home_continue_checkin_sub">%1$s</string>
+    <string name="home_continue_checkin_cta">Check in</string>
+    <string name="home_continue_program_sub">Day %1$d of 7 · %2$d min</string>
+    <string name="home_continue_breathe_title">Today\u2019s reset</string>
+    <string name="home_continue_breathe_sub">Pick your goal</string>
+    <string name="home_continue_winddown_title">Wind down tonight</string>
+    <string name="home_continue_winddown_sub">Tonight\u2019s sleep session</string>
+    <string name="home_continue_cta">Start</string>
+    <string name="home_health_banner_available">Connect to sharpen your score</string>
+    <string name="home_health_banner_install">Get Health Connect</string>
+    <string name="home_week_title">Your week</string>
+    <string name="home_week_calm">%1$d calm min</string>
+    <string name="home_week_journal">%1$d journaled</string>
+    <string name="home_today_calm_value_today">%1$d min today</string>
+    <string name="home_prompt_cta">Write</string>
+    <string name="home_winddown_title">Wind down tonight</string>
+    <string name="home_winddown_last">Last night: %1$d min with %2$s</string>
+    <string name="home_winddown_last_nosound">Last night: %1$d min</string>
+    <string name="home_winddown_none">No wind-down yet. Start tonight.</string>
 
     <!-- Mood check-in -->
     <string name="mood_title">How are you right now?</string>
@@ -82,34 +113,47 @@
     <string name="journal_prompt_label">Today\u2019s prompt</string>
     <string name="journal_editor_placeholder">Let it out. No one is grading this.</string>
 
-    <!-- Insights -->
+    <!-- Insights (v2: free analytics screen, no premium gate) -->
     <string name="insights_title">Insights</string>
     <string name="insights_loading">Crunching your patterns…</string>
-    <string name="insights_upsell_title">Unlock Insights</string>
-    <string name="insights_upsell_sub">See what your moods are trying to tell you: trends, pixels, and patterns.</string>
-    <string name="insights_delta_empty">Not enough check-ins yet</string>
-    <string name="insights_delta_up">Mood trending up (+%1$.1f)</string>
-    <string name="insights_delta_down">Mood trending down (%1$.1f)</string>
-    <string name="insights_delta_flat">Mood holding steady</string>
-    <string name="insights_trend_title">Mood trend</string>
-    <string-array name="insights_weekday_labels">
-        <item>M</item>
-        <item>T</item>
-        <item>W</item>
-        <item>T</item>
-        <item>F</item>
-        <item>S</item>
-        <item>S</item>
-    </string-array>
-    <string name="insights_trend_start">30 days ago</string>
-    <string name="insights_trend_end">Today</string>
-    <string name="insights_trend_empty">Log a few check-ins and your trend line will appear here.</string>
-    <string name="insights_pixels_title">Pixels \u2014 %1$s</string>
-    <string name="insights_correlations_title">What moves your mood</string>
-    <string name="insights_activities_title">Mood by activity</string>
-    <string name="insights_activities_empty">Tag activities on check-ins to see what lifts you.</string>
-    <string name="insights_sleep_title">Sleep \u00d7 mood</string>
-    <string name="insights_sleep_empty">Log sleep sessions to unlock this pattern.</string>
-    <string name="insights_sleep_values">With sleep: %1$s avg \u00b7 Without: %2$s avg</string>
-    <string name="insights_consistency_sub">of the last 30 days you checked in. Small steps, real signal.</string>
+    <string name="insights_error">Could not load your insights.</string>
+    <!-- Connect Health slim banner -->
+    <string name="insights_connect_title">Connect Health</string>
+    <string name="insights_connect_body">Share heart rate and sleep to sharpen every insight.</string>
+    <string name="insights_connect_cta">Connect</string>
+    <!-- Recovery hero -->
+    <string name="insights_recovery_title">Recovery</string>
+    <string name="insights_band_charged">Charged</string>
+    <string name="insights_band_coasting">Coasting</string>
+    <string name="insights_band_depleted">Depleted</string>
+    <string name="insights_band_calibrating">Calibrating</string>
+    <string name="insights_recovery_score_cd">Recovery score %1$d out of 100</string>
+    <string name="insights_recovery_body">Your body’s overnight reset, from heart rate and sleep.</string>
+    <string name="insights_recovery_calibrating_body">Your first week of health data is still arriving. Keep your tracker on and sleep normally.</string>
+    <!-- Sleep section -->
+    <string name="insights_sleep_title">Sleep</string>
+    <string name="insights_sleep_bars_cd">Sleep scores for the last 14 nights</string>
+    <string name="insights_sleep_empty">No scored sleep yet. Connect Health and wear your tracker at night.</string>
+    <string name="insights_sleep_debt_label">Sleep debt</string>
+    <string name="insights_sleep_debt_hours">%1$.1f h</string>
+    <string name="insights_sleep_debt_empty">Not enough nights yet</string>
+    <string name="insights_sleep_need_sub">of your %1$.1f h nightly need</string>
+    <string name="insights_sri_label">Sleep regularity</string>
+    <string name="insights_jetlag_label">Social jetlag</string>
+    <string name="insights_jetlag_min">%1$d min</string>
+    <!-- Heart section -->
+    <string name="insights_heart_title">Heart</string>
+    <string name="insights_bpm_unit">bpm</string>
+    <string name="insights_rhr_baseline">21-day average %1$.0f bpm</string>
+    <string name="insights_rhr_no_data">No heart rate data yet. Connect Health to see your resting trend.</string>
+    <string name="insights_rhr_badge_elevated">Elevated · %1$.1fσ</string>
+    <string name="insights_rhr_badge_extreme">Very high · %1$.1fσ</string>
+    <string name="insights_rhr_badge_low">Below baseline · %1$.1fσ</string>
+    <string name="insights_trend_climbing">climbing %1$.1f bpm/day</string>
+    <string name="insights_trend_falling">falling %1$.1f bpm/day</string>
+    <string name="insights_trend_flat">holding steady</string>
+    <string name="insights_hrv_label">HRV (RMSSD) today</string>
+    <string name="insights_hrv_ms">%1$.0f ms</string>
+    <!-- Insight cards -->
+    <string name="insights_cards_title">For you</string>
 </resources>

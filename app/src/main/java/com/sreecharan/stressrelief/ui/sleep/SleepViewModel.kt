@@ -3,9 +3,6 @@ package com.sreecharan.stressrelief.ui.sleep
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sreecharan.stressrelief.data.billing.BillingRepository
-import com.sreecharan.stressrelief.data.billing.EntitlementState
-import com.sreecharan.stressrelief.ui.paywall.PaywallLaunchContext
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -23,8 +20,6 @@ data class SleepLayerUiState(
     val layer: SleepSoundLayer,
     val isEnabled: Boolean,
     val volume: Float,
-    /** False when the layer is premium and the user is not premium. */
-    val isUnlocked: Boolean,
 )
 
 @Immutable
@@ -35,8 +30,6 @@ sealed interface SleepUiState {
         val layers: ImmutableList<SleepLayerUiState> = persistentListOf(),
         /** Null = infinite. */
         val timerMinutes: Int? = 30,
-        val isPremium: Boolean = false,
-        val billingLoading: Boolean = true,
         val canBegin: Boolean = false,
     ) : SleepUiState
 
@@ -47,22 +40,18 @@ sealed interface SleepUiState {
 
 sealed interface SleepEvent {
     data object NavigateToSession : SleepEvent
-
-    /** A locked premium layer (or the upsell card) was tapped. */
-    data object OpenPaywall : SleepEvent
 }
 
 /**
  * Sleep mixer screen: toggleable generated sound layers with per-layer
  * volume, a timer picker, and the "Begin wind-down" entry to the session.
+ * All sound layers are free for everyone.
  */
 @HiltViewModel
 class SleepViewModel
     @Inject
     constructor(
-        private val billing: BillingRepository,
         private val sessionConfig: SleepSessionConfig,
-        private val paywallLaunchContext: PaywallLaunchContext,
     ) : ViewModel() {
         private val _uiState = MutableStateFlow<SleepUiState>(SleepUiState.Loading)
         val uiState: StateFlow<SleepUiState> = _uiState.asStateFlow()
@@ -86,27 +75,9 @@ class SleepViewModel
                                     layer = layer,
                                     isEnabled = layer.id == "rain",
                                     volume = 0.7f,
-                                    isUnlocked = !layer.isPremium,
                                 )
                             }.toImmutableList(),
                 )
-            viewModelScope.launch {
-                billing.entitlement.collect { state ->
-                    when (state) {
-                        is EntitlementState.Ready -> {
-                            applyPremium(state.isPremium, loading = false)
-                        }
-
-                        EntitlementState.Loading -> {
-                            applyPremium(isPremium = false, loading = true)
-                        }
-
-                        EntitlementState.Unavailable -> {
-                            applyPremium(isPremium = false, loading = false)
-                        }
-                    }
-                }
-            }
             refreshCanBegin()
         }
 
@@ -114,12 +85,6 @@ class SleepViewModel
             layerId: String,
             enabled: Boolean,
         ) {
-            val current = _uiState.value as? SleepUiState.Content ?: return
-            val target = current.layers.find { it.layer.id == layerId } ?: return
-            if (enabled && !target.isUnlocked) {
-                openPaywall()
-                return
-            }
             updateContent { state ->
                 state.copy(
                     layers =
@@ -155,15 +120,11 @@ class SleepViewModel
             updateContent { it.copy(timerMinutes = timerMinutes) }
         }
 
-        fun onPremiumUpsellClicked() {
-            openPaywall()
-        }
-
         fun onBeginClicked() {
             val state = _uiState.value as? SleepUiState.Content ?: return
             val enabled =
                 state.layers
-                    .filter { it.isEnabled && it.isUnlocked }
+                    .filter { it.isEnabled }
                     .associate { it.layer.id to it.volume }
             if (enabled.isEmpty()) return
             sessionConfig.layers = enabled
@@ -171,33 +132,10 @@ class SleepViewModel
             viewModelScope.launch { _events.send(SleepEvent.NavigateToSession) }
         }
 
-        private fun openPaywall() {
-            paywallLaunchContext.launchFromPremiumFeature()
-            viewModelScope.launch { _events.send(SleepEvent.OpenPaywall) }
-        }
-
-        private fun applyPremium(
-            isPremium: Boolean,
-            loading: Boolean,
-        ) {
-            updateContent { state ->
-                state.copy(
-                    isPremium = isPremium,
-                    billingLoading = loading,
-                    layers =
-                        state.layers
-                            .map {
-                                it.copy(isUnlocked = !it.layer.isPremium || isPremium)
-                            }.toImmutableList(),
-                )
-            }
-            refreshCanBegin()
-        }
-
         private fun refreshCanBegin() {
             updateContent { state ->
                 state.copy(
-                    canBegin = state.layers.any { it.isEnabled && it.isUnlocked },
+                    canBegin = state.layers.any { it.isEnabled },
                 )
             }
         }

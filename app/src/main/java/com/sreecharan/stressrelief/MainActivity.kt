@@ -16,14 +16,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.sreecharan.stressrelief.data.model.ThemeMode
 import com.sreecharan.stressrelief.navigation.AppNavHost
-import com.sreecharan.stressrelief.ui.paywall.BillingGate
-import com.sreecharan.stressrelief.ui.paywall.PaywallLaunchContext
 import com.sreecharan.stressrelief.ui.theme.AppThemeUiState
 import com.sreecharan.stressrelief.ui.theme.AppThemeViewModel
 import com.sreecharan.stressrelief.ui.theme.AuraTheme
 import com.sreecharan.stressrelief.ui.theme.LocalAuroraDark
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 
 /**
  * Single activity, edge-to-edge. Applies the Aurora theme from
@@ -33,8 +30,6 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    @Inject lateinit var paywallLaunchContext: PaywallLaunchContext
-
     private var navControllerRef: NavHostController? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,21 +59,15 @@ class MainActivity : ComponentActivity() {
 
             AuraTheme(darkTheme = darkTheme, dynamicColor = dynamicColor) {
                 CompositionLocalProvider(LocalAuroraDark provides darkTheme) {
-                    // Cold-start gate: neutral splash until RevenueCat reports
-                    // the real entitlement; free tier keeps working when
-                    // billing is unconfigured (Unavailable -> not premium).
-                    BillingGate {
-                        val navController = rememberNavController()
-                        LaunchedEffect(navController) {
-                            navControllerRef = navController
-                            navController.handleDeepLink(resolveDeepLink(intent))
-                        }
-                        AppNavHost(
-                            navController = navController,
-                            onboardingCompleted = onboardingCompleted,
-                            paywallLaunchContext = paywallLaunchContext,
-                        )
+                    val navController = rememberNavController()
+                    LaunchedEffect(navController) {
+                        navControllerRef = navController
+                        navController.handleDeepLink(resolveDeepLink(intent))
                     }
+                    AppNavHost(
+                        navController = navController,
+                        onboardingCompleted = onboardingCompleted,
+                    )
                 }
             }
         }

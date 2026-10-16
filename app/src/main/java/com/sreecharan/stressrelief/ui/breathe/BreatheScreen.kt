@@ -1,5 +1,6 @@
 package com.sreecharan.stressrelief.ui.breathe
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,7 @@ import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -36,32 +38,48 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sreecharan.stressrelief.R
+import com.sreecharan.stressrelief.data.model.CustomPattern
 import com.sreecharan.stressrelief.ui.components.StaggerIn
 import com.sreecharan.stressrelief.ui.theme.AuroraShapeTokens
 import com.sreecharan.stressrelief.ui.theme.LocalAuroraDark
+import kotlinx.collections.immutable.ImmutableList
+import java.time.LocalDate
+import java.time.format.TextStyle
+import java.util.Locale
 
 /**
  * Breathe tab route. The NavHost calls this inside composable<BreatheRoute>;
- * [onNavigateToSession] should navigate to BreathingSessionRoute(goal, patternId).
+ * [onNavigateToSession] should navigate to BreathingSessionRoute(goal, patternId),
+ * [onCreateCustomPattern] to PatternBuilderRoute (wired by the coordinator in
+ * AppNavHost; defaults to a no-op so existing call sites keep compiling).
  */
 @Composable
 fun BreatheScreen(
     viewModel: BreatheViewModel = hiltViewModel(),
     onNavigateToSession: (goal: String, patternId: String) -> Unit,
+    onCreateCustomPattern: () -> Unit = {},
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
                 is BreatheEvent.OpenSession -> onNavigateToSession(event.goal, event.patternId)
+                BreatheEvent.OpenPatternBuilder -> onCreateCustomPattern()
             }
         }
     }
@@ -69,7 +87,9 @@ fun BreatheScreen(
         state = state,
         onGoalClick = viewModel::onGoalClick,
         onPatternClick = viewModel::onPatternClick,
+        onCreateCustomClick = viewModel::onCreateCustomClick,
         onPickerDismiss = viewModel::onPickerDismiss,
+        onGoalChange = viewModel::onGoalChange,
     )
 }
 
@@ -78,7 +98,9 @@ private fun BreatheScreenContent(
     state: BreatheUiState,
     onGoalClick: (String) -> Unit,
     onPatternClick: (String) -> Unit,
+    onCreateCustomClick: () -> Unit,
     onPickerDismiss: () -> Unit,
+    onGoalChange: (Int) -> Unit,
 ) {
     when (state) {
         BreatheUiState.Loading -> {
@@ -107,6 +129,12 @@ private fun BreatheScreenContent(
                     modifier = Modifier.padding(horizontal = 20.dp),
                 )
                 Spacer(Modifier.height(16.dp))
+                DiarySection(
+                    days = state.diary,
+                    goalMin = state.goalMin,
+                    onGoalChange = onGoalChange,
+                )
+                Spacer(Modifier.height(16.dp))
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
                     modifier = Modifier.weight(1f),
@@ -123,11 +151,129 @@ private fun BreatheScreenContent(
             if (selected != null) {
                 PatternPickerSheet(
                     goal = selected,
+                    customPatterns = state.customPatterns,
                     onPatternClick = onPatternClick,
+                    onCreateCustomClick = onCreateCustomClick,
                     onDismiss = onPickerDismiss,
                 )
             }
         }
+    }
+}
+
+private const val DIARY_GOAL_STEP_MIN = 5
+private const val MIN_DIARY_GOAL_MIN = 5
+private const val MAX_DIARY_GOAL_MIN = 120
+private const val BAR_WIDTH_FRAC = 0.52f
+private const val DIM_BAR_ALPHA = 0.55f
+private const val GOAL_LINE_ALPHA = 0.7f
+
+/**
+ * 7-day breathing diary: minutes-per-day bars against the daily goal line,
+ * plus a goal stepper. Canvas-drawn on the dawn scale; today highlighted.
+ */
+@Composable
+private fun DiarySection(
+    days: ImmutableList<DiaryDay>,
+    goalMin: Int,
+    onGoalChange: (Int) -> Unit,
+) {
+    val todayMinutes = days.firstOrNull { it.isToday }?.minutes?.toInt() ?: 0
+    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = stringResource(R.string.diary_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = stringResource(R.string.diary_subtitle, todayMinutes, goalMin),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        DiaryChart(
+            days = days,
+            goalMin = goalMin,
+            modifier = Modifier.fillMaxWidth().height(132.dp),
+        )
+        Spacer(Modifier.height(4.dp))
+        Row(modifier = Modifier.fillMaxWidth()) {
+            days.forEach { day ->
+                Text(
+                    text =
+                        LocalDate.ofEpochDay(day.epochDay)
+                            .dayOfWeek
+                            .getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                    style = MaterialTheme.typography.labelSmall,
+                    color =
+                        if (day.isToday) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+        Spacer(Modifier.height(4.dp))
+        StepperRow(
+            label = stringResource(R.string.diary_goal),
+            valueText = stringResource(R.string.diary_minutes, goalMin),
+            onDecrement = { onGoalChange(goalMin - DIARY_GOAL_STEP_MIN) },
+            onIncrement = { onGoalChange(goalMin + DIARY_GOAL_STEP_MIN) },
+            decrementEnabled = goalMin > MIN_DIARY_GOAL_MIN,
+            incrementEnabled = goalMin < MAX_DIARY_GOAL_MIN,
+        )
+    }
+}
+
+@Composable
+private fun DiaryChart(
+    days: ImmutableList<DiaryDay>,
+    goalMin: Int,
+    modifier: Modifier = Modifier,
+) {
+    val darkTheme = LocalAuroraDark.current
+    val barColor = if (darkTheme) NightTeal else DawnTeal
+    val todayColor = if (darkTheme) NightCyan else DawnCyan
+    val goalLineColor = MaterialTheme.colorScheme.onSurfaceVariant
+    val chartDesc = stringResource(R.string.diary_chart_desc)
+    Canvas(
+        modifier = modifier.semantics { contentDescription = chartDesc },
+    ) {
+        val maxMinutes =
+            maxOf(
+                goalMin.toFloat(),
+                days.maxOfOrNull { it.minutes } ?: 0f,
+                1f,
+            )
+        val slotWidth = size.width / days.size.coerceAtLeast(1)
+        val barWidth = slotWidth * BAR_WIDTH_FRAC
+        days.forEachIndexed { index, day ->
+            val frac = (day.minutes / maxMinutes).coerceIn(0f, 1f)
+            val barHeight = frac * size.height
+            val minHeight = if (day.minutes > 0f) 4.dp.toPx() else 0f
+            drawRoundRect(
+                color =
+                    (if (day.isToday) todayColor else barColor)
+                        .copy(alpha = if (day.isToday) 1f else DIM_BAR_ALPHA),
+                topLeft = Offset(index * slotWidth + (slotWidth - barWidth) / 2f, size.height - barHeight),
+                size = Size(barWidth, barHeight.coerceAtLeast(minHeight)),
+                cornerRadius = CornerRadius(barWidth / 2f, barWidth / 2f),
+            )
+        }
+        val goalY = size.height - (goalMin / maxMinutes).coerceIn(0f, 1f) * size.height
+        drawLine(
+            color = goalLineColor.copy(alpha = GOAL_LINE_ALPHA),
+            start = Offset(0f, goalY),
+            end = Offset(size.width, goalY),
+            strokeWidth = 2.dp.toPx(),
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(8.dp.toPx(), 6.dp.toPx())),
+        )
     }
 }
 
@@ -237,9 +383,12 @@ private fun timingSummary(pattern: PatternUi): String {
 @Composable
 private fun PatternPickerSheet(
     goal: GoalCardUi,
+    customPatterns: ImmutableList<CustomPattern>,
     onPatternClick: (String) -> Unit,
+    onCreateCustomClick: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val customDesc = stringResource(R.string.breathe_custom_pattern_desc)
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -263,6 +412,68 @@ private fun PatternPickerSheet(
                     onClick = { onPatternClick(pattern.id) },
                 )
             }
+            items(customPatterns, key = { it.id }) { custom ->
+                PatternRow(
+                    pattern =
+                        PatternUi(
+                            id = custom.id,
+                            name = custom.name,
+                            inhaleSec = custom.inhaleSec,
+                            holdSec = custom.holdSec,
+                            exhaleSec = custom.exhaleSec,
+                            holdAfterSec = custom.holdAfterSec,
+                            rounds = custom.rounds,
+                            description = customDesc,
+                        ),
+                    onClick = { onPatternClick(custom.id) },
+                )
+            }
+            item(key = "create_custom") {
+                CreateCustomCard(onClick = onCreateCustomClick)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CreateCustomCard(onClick: () -> Unit) {
+    Card(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+            ),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Add,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.breathe_create_custom),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    text = stringResource(R.string.breathe_create_custom_sub),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Icon(
+                imageVector = Icons.Rounded.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

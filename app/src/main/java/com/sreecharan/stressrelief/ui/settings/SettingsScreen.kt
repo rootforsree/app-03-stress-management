@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.NightsStay
 import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.PrivacyTip
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -70,7 +69,6 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
-    onOpenPaywall: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -83,7 +81,6 @@ fun SettingsScreen(
     SettingsContent(
         state = state,
         onBack = onBack,
-        onOpenPaywall = onOpenPaywall,
         onThemeModeSelected = viewModel::setThemeMode,
         onDynamicColorChanged = viewModel::setDynamicColor,
         onRemindersChanged = { enabled ->
@@ -109,7 +106,6 @@ fun SettingsScreen(
 fun SettingsContent(
     state: SettingsUiState,
     onBack: () -> Unit,
-    onOpenPaywall: () -> Unit,
     onThemeModeSelected: (ThemeMode) -> Unit,
     onDynamicColorChanged: (Boolean) -> Unit,
     onRemindersChanged: (Boolean) -> Unit,
@@ -245,12 +241,6 @@ fun SettingsContent(
                     item { SectionHeader(title = stringResource(R.string.settings_section_about)) }
                     item {
                         AuroraCard(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth()) {
-                            SettingsActionRow(
-                                icon = Icons.Filled.Star,
-                                title = stringResource(R.string.settings_premium_title),
-                                subtitle = stringResource(R.string.settings_premium_sub),
-                                onClick = onOpenPaywall,
-                            )
                             SettingsInfoRow(
                                 icon = Icons.Filled.Info,
                                 title = stringResource(R.string.settings_version, BuildConfig.VERSION_NAME),

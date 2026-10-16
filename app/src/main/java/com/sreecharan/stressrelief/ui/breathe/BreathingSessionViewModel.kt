@@ -7,6 +7,9 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.sreecharan.stressrelief.data.catalog.BreathingPattern
 import com.sreecharan.stressrelief.data.catalog.BreathingPatterns
+import com.sreecharan.stressrelief.data.datastore.CustomPatternStore
+import com.sreecharan.stressrelief.data.health.HealthConnectStateProvider
+import com.sreecharan.stressrelief.data.model.CustomPattern
 import com.sreecharan.stressrelief.data.repository.BreathingRepository
 import com.sreecharan.stressrelief.data.repository.WellnessRepository
 import com.sreecharan.stressrelief.di.IoDispatcher
@@ -21,6 +24,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -50,6 +54,7 @@ sealed interface BreathingSessionUiState {
         val totalProgress: Float,
         val isPaused: Boolean,
         val patternName: String,
+        val pace: Float,
     ) : BreathingSessionUiState
 
     data class Celebrating(
@@ -78,6 +83,17 @@ private fun BreathingPattern.toSpec(): BreathingPatternSpec =
         rounds = rounds,
     )
 
+private fun CustomPattern.toSpec(): BreathingPatternSpec =
+    BreathingPatternSpec(
+        id = id,
+        name = name,
+        inhaleSec = inhaleSec,
+        holdSec = holdSec,
+        exhaleSec = exhaleSec,
+        holdAfterSec = holdAfterSec,
+        rounds = rounds,
+    )
+
 private val FallbackSpec =
     BreathingPatternSpec(
         id = "4-4-6",
@@ -89,23 +105,41 @@ private val FallbackSpec =
         rounds = 6,
     )
 
-private fun goalTitle(goal: String): String =
-    when (goal.uppercase()) {
-        "CALM" -> "Calm"
-        "SLEEP" -> "Sleep"
-        "FOCUS" -> "Focus"
-        "SOS" -> "SOS"
-        else -> goal
-    }
+/**
+ * Resolves a pattern id to a timing spec. Pure function of its inputs, so it
+ * is unit-testable without a ViewModel.
+ *
+ * - "custom-*" ids resolve against the user's saved custom patterns.
+ * - Anything else resolves against the static catalog.
+ * - Unknown ids fall back to "4-4-6". Never throws.
+ */
+internal fun resolvePatternSpec(
+    patternId: String,
+    customPatterns: List<CustomPattern>,
+): BreathingPatternSpec =
+    runCatching {
+        if (patternId.startsWith(CUSTOM_PATTERN_ID_PREFIX)) {
+            customPatterns.firstOrNull { it.id == patternId }?.toSpec()
+        } else {
+            BreathingPatterns.byId(patternId)?.toSpec()
+        }
+    }.getOrNull() ?: FallbackSpec
+
+private const val CUSTOM_PATTERN_ID_PREFIX = "custom-"
 
 /**
- * Drives one breathing session. A 100ms ticker advances elapsed time
+ * Drives one breathing session. A 100ms ticker advances a paced clock
  * through [BreathingPhaseMachine]; every phase change emits
  * [BreathingSessionEvent.PhaseChanged] for the haptic tick.
+ *
+ * The pattern id resolves asynchronously (custom patterns come from
+ * DataStore), so the screen shows Loading until the spec is ready.
  *
  * Finish (natural or early exit) records via the repositories on the IO
  * dispatcher, then emits [BreathingSessionEvent.NavigateBack]. Repository
  * failures are swallowed so a session can never crash at its best moment.
+ * A natural finish also writes the session back to Health Connect,
+ * fire-and-forget; a false return is silently skipped.
  */
 @HiltViewModel
 class BreathingSessionViewModel
@@ -113,6 +147,8 @@ class BreathingSessionViewModel
     constructor(
         private val breathingRepository: BreathingRepository,
         private val wellnessRepository: WellnessRepository,
+        private val customPatternStore: CustomPatternStore,
+        private val healthConnect: HealthConnectStateProvider,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
         savedStateHandle: SavedStateHandle,
         private val widgetUpdater: AuraWidgetUpdater,
@@ -120,15 +156,20 @@ class BreathingSessionViewModel
         companion object {
             const val TICK_MS = 100L
             const val CELEBRATION_MS = 2_400L
+            const val MIN_PACE = 0.5f
+            const val MAX_PACE = 2.0f
+            private const val DEFAULT_PACE = 1.0f
             private const val MS_PER_SEC = 1_000L
             private const val SECS_PER_MIN = 60
             private const val ROUND_UP_SECS = 30
         }
 
         private val routeArgs: BreathingSessionRoute = savedStateHandle.toRoute()
-        private val spec: BreathingPatternSpec =
-            BreathingPatterns.byId(routeArgs.patternId)?.toSpec() ?: FallbackSpec
-        private val machine = BreathingPhaseMachine(spec)
+
+        // Resolved asynchronously in init; null until the spec is ready.
+        private var spec: BreathingPatternSpec? = null
+        private var machine: BreathingPhaseMachine? = null
+        private val pace = MutableStateFlow(DEFAULT_PACE)
 
         private val _uiState =
             MutableStateFlow<BreathingSessionUiState>(BreathingSessionUiState.Loading)
@@ -140,21 +181,37 @@ class BreathingSessionViewModel
         private var programId: String? = null
         private var programDay: Int = -1
 
-        private var elapsedMs = 0L
+        // pacedMs drives the phase machine (pace-adjusted); wallActiveMs is
+        // real time spent unpaused, used for recording and Health Connect.
+        private var pacedMs = 0L
+        private var wallActiveMs = 0L
+        private var sessionStartWallMs = 0L
         private var ticker: Job? = null
         private var lastPhase: BreathPhase? = null
         private var finished = false
 
         init {
-            _uiState.value =
-                BreathingSessionUiState.Ready(
-                    patternName = spec.name,
-                    goalTitle = goalTitle(routeArgs.goal),
-                    totalRounds = spec.rounds,
-                    totalSeconds = spec.totalSeconds,
-                )
-            startTicker()
+            viewModelScope.launch {
+                val resolved = resolveSpec(routeArgs.patternId)
+                spec = resolved
+                machine = BreathingPhaseMachine(resolved)
+                sessionStartWallMs = System.currentTimeMillis()
+                _uiState.value =
+                    BreathingSessionUiState.Ready(
+                        patternName = resolved.name,
+                        goalTitle = goalTitle(routeArgs.goal),
+                        totalRounds = resolved.rounds,
+                        totalSeconds = resolved.totalSeconds,
+                    )
+                startTicker()
+            }
         }
+
+        private suspend fun resolveSpec(patternId: String): BreathingPatternSpec =
+            runCatching {
+                val customs = customPatternStore.patterns.first()
+                resolvePatternSpec(patternId, customs)
+            }.getOrDefault(FallbackSpec)
 
         /**
          * Optional program context, supplied by the route when the session was
@@ -166,6 +223,15 @@ class BreathingSessionViewModel
         ) {
             this.programId = programId
             this.programDay = day
+        }
+
+        /** Pace multiplier, 0.5x..2x. Takes effect live in the ticker. */
+        fun setPace(value: Float) {
+            val coerced = value.coerceIn(MIN_PACE, MAX_PACE)
+            if (pace.value == coerced) return
+            pace.value = coerced
+            val current = _uiState.value as? BreathingSessionUiState.Active ?: return
+            _uiState.value = current.copy(pace = coerced)
         }
 
         fun onPauseResume() {
@@ -189,7 +255,7 @@ class BreathingSessionViewModel
             ticker?.cancel()
             ticker = null
             finished = true
-            val durationSec = (elapsedMs / MS_PER_SEC).toInt()
+            val durationSec = (wallActiveMs / MS_PER_SEC).toInt()
             if (durationSec <= 0) {
                 _events.trySend(BreathingSessionEvent.NavigateBack)
                 return
@@ -199,7 +265,7 @@ class BreathingSessionViewModel
                     runCatching {
                         breathingRepository.recordSession(
                             goal = routeArgs.goal,
-                            patternId = spec.id,
+                            patternId = spec?.id ?: FallbackSpec.id,
                             durationSec = durationSec,
                             completed = false,
                         )
@@ -223,9 +289,11 @@ class BreathingSessionViewModel
         }
 
         private fun advance(deltaMs: Long) {
+            val machine = machine ?: return
             if (finished) return
-            elapsedMs += deltaMs
-            val pos = machine.positionAt(elapsedMs)
+            wallActiveMs += deltaMs
+            pacedMs += (deltaMs * pace.value).toLong()
+            val pos = machine.positionAt(pacedMs)
             if (pos == null) {
                 onSessionFinished()
                 return
@@ -245,7 +313,8 @@ class BreathingSessionViewModel
                     totalRounds = pos.totalRounds,
                     totalProgress = pos.totalProgress,
                     isPaused = false,
-                    patternName = spec.name,
+                    patternName = spec?.name.orEmpty(),
+                    pace = pace.value,
                 )
         }
 
@@ -253,16 +322,28 @@ class BreathingSessionViewModel
             finished = true
             ticker?.cancel()
             ticker = null
-            val totalSec = (machine.totalDurationMs / MS_PER_SEC).toInt()
-            val minutes = max(1, (totalSec + ROUND_UP_SECS) / SECS_PER_MIN)
-            _uiState.value = BreathingSessionUiState.Celebrating(minutes = minutes, rounds = spec.rounds)
+            val durationSec = (wallActiveMs / MS_PER_SEC).toInt()
+            val minutes = max(1, (durationSec + ROUND_UP_SECS) / SECS_PER_MIN)
+            _uiState.value =
+                BreathingSessionUiState.Celebrating(
+                    minutes = minutes,
+                    rounds = spec?.rounds ?: 0,
+                )
+            val startMs = sessionStartWallMs
+            val endMs = startMs + wallActiveMs
+            // Health Connect write-back: fire-and-forget on IO. A false
+            // return (or a throw, though the contract says never) is a silent
+            // skip; the celebration must never wait on it.
+            viewModelScope.launch(ioDispatcher) {
+                runCatching { healthConnect.writeBreathingSession(startMs, endMs) }
+            }
             viewModelScope.launch {
                 withContext(ioDispatcher) {
                     runCatching {
                         breathingRepository.recordSession(
                             goal = routeArgs.goal,
-                            patternId = spec.id,
-                            durationSec = totalSec,
+                            patternId = spec?.id ?: FallbackSpec.id,
+                            durationSec = durationSec,
                             completed = true,
                         )
                         wellnessRepository.markBreathingDone(minutes)

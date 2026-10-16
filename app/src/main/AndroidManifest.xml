@@ -10,6 +10,14 @@
     <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
     <uses-permission android:name="android.permission.health.READ_SLEEP" />
 
+    <!-- Health Connect (Builder 1, contract section 6): HRV read, breathing
+         session write-back, and history for baselines. No
+         READ_HEALTH_DATA_IN_BACKGROUND (needs Play review; v2 reads on
+         foreground only). -->
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE_VARIABILITY" />
+    <uses-permission android:name="android.permission.health.WRITE_EXERCISE" />
+    <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_HISTORY" />
+
     <application
         android:name=".StressReliefApp"
         android:allowBackup="true"

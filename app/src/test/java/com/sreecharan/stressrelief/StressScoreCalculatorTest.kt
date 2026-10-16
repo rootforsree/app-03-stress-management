@@ -11,27 +11,27 @@ class StressScoreCalculatorTest {
     private val noSignals = StressSignals(avgRestingHr = null, sleepHours = null)
 
     @Test
-    fun `best possible mood scores calm at zero`() {
+    fun `best possible mood scores low at zero`() {
         val score = StressScoreCalculator.compute(avgMood = 5.0, signals = noSignals, checkInCount = 7)
 
         assertEquals(0, score.score)
-        assertEquals("Calm", score.label)
+        assertEquals("Low", score.label)
     }
 
     @Test
-    fun `worst possible mood scores high at one hundred`() {
+    fun `worst possible mood scores very high at one hundred`() {
         val score = StressScoreCalculator.compute(avgMood = 1.0, signals = noSignals, checkInCount = 7)
 
         assertEquals(100, score.score)
-        assertEquals("High", score.label)
+        assertEquals("Very high", score.label)
     }
 
     @Test
-    fun `neutral mood lands elevated at fifty`() {
+    fun `neutral mood lands moderate at fifty`() {
         val score = StressScoreCalculator.compute(avgMood = 3.0, signals = noSignals, checkInCount = 3)
 
         assertEquals(50, score.score)
-        assertEquals("Elevated", score.label)
+        assertEquals("Moderate", score.label)
     }
 
     @Test
@@ -92,10 +92,12 @@ class StressScoreCalculatorTest {
     }
 
     @Test
-    fun `label thresholds hold`() {
-        assertEquals("Calm", StressScoreCalculator.compute(4.5, noSignals, 2).label)
-        assertEquals("Moderate", StressScoreCalculator.compute(4.0, noSignals, 2).label)
-        assertEquals("Elevated", StressScoreCalculator.compute(3.0, noSignals, 2).label)
-        assertEquals("High", StressScoreCalculator.compute(1.5, noSignals, 2).label)
+    fun `v2 label bands hold`() {
+        // 0-25 Low, 26-50 Moderate, 51-75 High, 76-100 Very high.
+        assertEquals("Low", StressScoreCalculator.compute(4.5, noSignals, 2).label) // 13
+        assertEquals("Low", StressScoreCalculator.compute(4.0, noSignals, 2).label) // 25
+        assertEquals("Moderate", StressScoreCalculator.compute(3.0, noSignals, 2).label) // 50
+        assertEquals("High", StressScoreCalculator.compute(2.0, noSignals, 2).label) // 75
+        assertEquals("Very high", StressScoreCalculator.compute(1.5, noSignals, 2).label) // 88
     }
 }

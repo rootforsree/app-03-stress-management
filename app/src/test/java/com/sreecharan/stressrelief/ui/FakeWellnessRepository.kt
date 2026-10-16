@@ -1,7 +1,9 @@
 package com.sreecharan.stressrelief.ui
 
+import com.sreecharan.stressrelief.data.model.InsightsData
 import com.sreecharan.stressrelief.data.model.JournalEntry
 import com.sreecharan.stressrelief.data.model.MoodCheckIn
+import com.sreecharan.stressrelief.data.model.RecoveryBand
 import com.sreecharan.stressrelief.data.model.StressScore
 import com.sreecharan.stressrelief.data.repository.WellnessRepository
 import kotlinx.coroutines.flow.Flow
@@ -77,6 +79,26 @@ class FakeWellnessRepository(
     override fun observeTotalCalmMinutes(): Flow<Int> = calmMinutesFlow
 
     override suspend fun computeStressScore(): StressScore = stressScoreResult ?: StressScore(50, "Steady", emptyList())
+
+    override suspend fun computeInsights(): InsightsData =
+        InsightsData(
+            sleepNights = emptyList(),
+            sleepDebtHours = null,
+            sleepNeedHours = 8f,
+            sri = null,
+            socialJetlagMin = null,
+            restingHrToday = null,
+            restingHrBaseline = null,
+            restingHrZ = null,
+            hrvRmssdToday = null,
+            recoveryScore = null,
+            recoveryBand = RecoveryBand.CALIBRATING,
+            restingHrTrendBpmPerDay = null,
+            sleepTrendMinPerDay = null,
+            insightCards = emptyList(),
+            calibrating = true,
+            healthConnected = false,
+        )
 
     override suspend fun markBreathingDone(minutes: Int) {
         breathingDoneMinutes = minutes

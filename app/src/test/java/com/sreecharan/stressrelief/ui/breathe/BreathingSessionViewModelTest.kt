@@ -2,12 +2,21 @@ package com.sreecharan.stressrelief.ui.breathe
 
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
+import com.sreecharan.stressrelief.data.datastore.CustomPatternStore
+import com.sreecharan.stressrelief.data.health.HealthConnectStateProvider
+import com.sreecharan.stressrelief.data.model.CustomPattern
 import com.sreecharan.stressrelief.widget.AuraWidgetUpdater
+import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
@@ -22,12 +31,14 @@ class BreathingSessionViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var breathingRepo: FakeBreathingRepository
     private lateinit var wellnessRepo: FakeWellnessRepository
+    private lateinit var healthConnect: HealthConnectStateProvider
 
     @BeforeEach
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         breathingRepo = FakeBreathingRepository()
         wellnessRepo = FakeWellnessRepository()
+        healthConnect = mockk(relaxed = true)
     }
 
     @AfterEach
@@ -35,17 +46,27 @@ class BreathingSessionViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createVm(
+    private fun fakeCustomStore(customs: List<CustomPattern> = emptyList()): CustomPatternStore {
+        val store = mockk<CustomPatternStore>()
+        every { store.patterns } returns flowOf(customs)
+        every { store.breathingGoalMin } returns flowOf(10)
+        return store
+    }
+
+    private fun TestScope.createVm(
         patternId: String = "4-4-6",
         goal: String = "CALM",
+        customs: List<CustomPattern> = emptyList(),
     ): BreathingSessionViewModel =
         BreathingSessionViewModel(
             breathingRepository = breathingRepo,
             wellnessRepository = wellnessRepo,
+            customPatternStore = fakeCustomStore(customs),
+            healthConnect = healthConnect,
             ioDispatcher = testDispatcher,
             savedStateHandle = SavedStateHandle(mapOf("goal" to goal, "patternId" to patternId)),
             widgetUpdater = mockk<AuraWidgetUpdater>(relaxed = true),
-        )
+        ).also { runCurrent() }
 
     @Test
     fun `starts ready then runs inhale`() =
@@ -100,6 +121,29 @@ class BreathingSessionViewModelTest {
         }
 
     @Test
+    fun `pace change speeds up the session`() =
+        runTest(testDispatcher) {
+            val vm = createVm()
+            testScheduler.advanceTimeBy(150)
+            vm.setPace(2.0f)
+            assertEquals(2.0f, (vm.uiState.value as BreathingSessionUiState.Active).pace)
+            // At 2x the 4s inhale completes in 2s of wall time.
+            testScheduler.advanceTimeBy(2_000)
+            assertEquals(BreathPhase.EXHALE, (vm.uiState.value as BreathingSessionUiState.Active).phase)
+        }
+
+    @Test
+    fun `pace is coerced to 0_5x to 2x`() =
+        runTest(testDispatcher) {
+            val vm = createVm()
+            testScheduler.advanceTimeBy(150)
+            vm.setPace(9.0f)
+            assertEquals(2.0f, (vm.uiState.value as BreathingSessionUiState.Active).pace)
+            vm.setPace(0.0f)
+            assertEquals(0.5f, (vm.uiState.value as BreathingSessionUiState.Active).pace)
+        }
+
+    @Test
     fun `natural finish records a completed session and the program day`() =
         runTest(testDispatcher) {
             val vm = createVm()
@@ -116,6 +160,11 @@ class BreathingSessionViewModelTest {
             assertTrue(recorded.completed)
             assertEquals(listOf(1), wellnessRepo.breathingMinutesCalls)
             assertEquals(listOf("calm-reset" to 2), breathingRepo.completedDays)
+            // Health Connect write-back covers the wall-clock session window.
+            val startSlot = slot<Long>()
+            val endSlot = slot<Long>()
+            coVerify { healthConnect.writeBreathingSession(capture(startSlot), capture(endSlot)) }
+            assertEquals(60_000L, endSlot.captured - startSlot.captured)
             vm.events.test {
                 var event: BreathingSessionEvent = awaitItem()
                 while (event !is BreathingSessionEvent.NavigateBack) {
@@ -153,5 +202,41 @@ class BreathingSessionViewModelTest {
                 assertEquals(BreathingSessionEvent.NavigateBack, awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
+        }
+
+    @Test
+    fun `custom pattern id resolves from the store`() =
+        runTest(testDispatcher) {
+            val custom =
+                CustomPattern(
+                    id = "custom-abc123",
+                    name = "My Calm",
+                    inhaleSec = 6,
+                    holdSec = 2,
+                    exhaleSec = 6,
+                    holdAfterSec = 2,
+                    rounds = 5,
+                )
+            val vm = createVm(patternId = "custom-abc123", customs = listOf(custom))
+            val ready = vm.uiState.value as BreathingSessionUiState.Ready
+            assertEquals("My Calm", ready.patternName)
+            assertEquals(5, ready.totalRounds)
+        }
+
+    @Test
+    fun `unknown pattern id falls back to 4-4-6`() =
+        runTest(testDispatcher) {
+            val vm = createVm(patternId = "nope-not-real")
+            val ready = vm.uiState.value as BreathingSessionUiState.Ready
+            assertEquals("4-4-6 Calm", ready.patternName)
+            assertEquals(6, ready.totalRounds)
+        }
+
+    @Test
+    fun `unknown custom id falls back to 4-4-6`() =
+        runTest(testDispatcher) {
+            val vm = createVm(patternId = "custom-deleted")
+            val ready = vm.uiState.value as BreathingSessionUiState.Ready
+            assertEquals("4-4-6 Calm", ready.patternName)
         }
 }

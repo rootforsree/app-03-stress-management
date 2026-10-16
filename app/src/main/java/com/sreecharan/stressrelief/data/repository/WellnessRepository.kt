@@ -1,6 +1,7 @@
 package com.sreecharan.stressrelief.data.repository
 
 import com.sreecharan.stressrelief.data.model.BreathingSession
+import com.sreecharan.stressrelief.data.model.InsightsData
 import com.sreecharan.stressrelief.data.model.JournalEntry
 import com.sreecharan.stressrelief.data.model.MoodCheckIn
 import com.sreecharan.stressrelief.data.model.StressScore
@@ -39,6 +40,13 @@ interface WellnessRepository {
     fun observeTotalCalmMinutes(): Flow<Int>
 
     suspend fun computeStressScore(): StressScore
+
+    /**
+     * Everything the Insights screen needs, in one call. Never throws:
+     * every Health Connect read is guarded and missing data yields nulls
+     * plus calibrating/neutral defaults, never zeros.
+     */
+    suspend fun computeInsights(): InsightsData
 
     suspend fun markBreathingDone(minutes: Int)
 

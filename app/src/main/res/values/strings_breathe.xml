@@ -37,6 +37,49 @@
     <string name="session_celebration_title">Beautifully done</string>
     <string name="session_celebration_sub">%1$d calm minutes banked</string>
 
+    <!-- Shared stepper -->
+    <string name="stepper_decrease">Decrease %1$s</string>
+    <string name="stepper_increase">Increase %1$s</string>
+
+    <!-- Breathing diary -->
+    <string name="diary_title">Breathing diary</string>
+    <string name="diary_subtitle">%1$d of %2$d min today</string>
+    <string name="diary_goal">Daily goal</string>
+    <string name="diary_minutes">%1$d min</string>
+    <string name="diary_chart_desc">Minutes breathed per day for the last 7 days</string>
+
+    <!-- Create your own card -->
+    <string name="breathe_create_custom">Create your own</string>
+    <string name="breathe_create_custom_sub">Design a rhythm that fits you</string>
+    <string name="breathe_custom_pattern_desc">Your custom rhythm</string>
+
+    <!-- Pattern builder -->
+    <string name="builder_title">Create your pattern</string>
+    <string name="builder_close">Back</string>
+    <string name="builder_name_label">Name</string>
+    <string name="builder_name_placeholder">e.g. Before-bed wind-down</string>
+    <string name="builder_name_counter">%1$d / %2$d</string>
+    <string name="builder_default_name">My pattern</string>
+    <string name="builder_goal_label">Goal</string>
+    <string name="builder_inhale">Inhale</string>
+    <string name="builder_hold">Hold</string>
+    <string name="builder_exhale">Exhale</string>
+    <string name="builder_hold_after">Rest after exhale</string>
+    <string name="builder_rounds">Rounds</string>
+    <string name="builder_seconds">%1$ds</string>
+    <string name="builder_phase_in">%1$ds in</string>
+    <string name="builder_phase_hold">%1$ds hold</string>
+    <string name="builder_phase_exhale">%1$ds out</string>
+    <string name="builder_phase_rest">%1$ds rest</string>
+    <string name="builder_save">Save</string>
+    <string name="builder_save_and_start">Save and start</string>
+
+    <!-- Session: eyes-closed mode and pace -->
+    <string name="session_eyes_closed_on">Eyes-closed mode on</string>
+    <string name="session_eyes_closed_off">Eyes-closed mode off</string>
+    <string name="session_pace">Pace</string>
+    <string name="session_pace_value">%1$.1fx</string>
+
     <!-- Programs -->
     <string name="programs_title">Programs</string>
     <string name="programs_subtitle">Seven days, one small practice a day</string>

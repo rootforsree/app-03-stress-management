@@ -62,9 +62,6 @@
 
     <string name="settings_version">Version %1$s</string>
 
-    <string name="settings_premium_title">Aura Premium</string>
-    <string name="settings_premium_sub">Insights, premium sleep packs and more</string>
-
     <!-- Shared components -->
     <string name="action_retry">Retry</string>
     <string name="placeholder_coming_soon">This screen is on its way</string>

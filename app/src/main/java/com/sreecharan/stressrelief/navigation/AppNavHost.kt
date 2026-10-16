@@ -36,6 +36,7 @@ import androidx.navigation.toRoute
 import com.sreecharan.stressrelief.R
 import com.sreecharan.stressrelief.ui.breathe.BreatheScreen
 import com.sreecharan.stressrelief.ui.breathe.BreathingSessionScreen
+import com.sreecharan.stressrelief.ui.breathe.PatternBuilderScreen
 import com.sreecharan.stressrelief.ui.breathe.ProgramsScreen
 import com.sreecharan.stressrelief.ui.home.HomeScreen
 import com.sreecharan.stressrelief.ui.insights.InsightsScreen
@@ -43,8 +44,6 @@ import com.sreecharan.stressrelief.ui.journal.JournalEditorScreen
 import com.sreecharan.stressrelief.ui.journal.JournalScreen
 import com.sreecharan.stressrelief.ui.mood.MoodCheckInSheet
 import com.sreecharan.stressrelief.ui.onboarding.OnboardingScreen
-import com.sreecharan.stressrelief.ui.paywall.PaywallLaunchContext
-import com.sreecharan.stressrelief.ui.paywall.PaywallScreen
 import com.sreecharan.stressrelief.ui.settings.SettingsScreen
 import com.sreecharan.stressrelief.ui.sleep.SleepScreen
 import com.sreecharan.stressrelief.ui.sleep.SleepSessionScreen
@@ -64,7 +63,6 @@ private const val KEY_PROGRAM_DAY = "programDay"
 fun AppNavHost(
     navController: NavHostController = rememberNavController(),
     onboardingCompleted: Boolean,
-    paywallLaunchContext: PaywallLaunchContext,
     modifier: Modifier = Modifier,
 ) {
     val startDestination: Any = if (onboardingCompleted) HomeTabGraph else OnboardingRoute
@@ -97,22 +95,13 @@ fun AppNavHost(
                 }
             }
             composable<InsightsRoute> {
-                // Premium gating lives inside InsightsScreen (Builder 5's ProGate);
-                // this lambda only makes sure a paywall launch from the upsell
-                // is tagged as a premium-feature launch (no close affordance).
                 InsightsScreen(
-                    onNavigate = {
-                        navController.navigateWithPaywallContext(paywallLaunchContext, it)
-                    },
+                    onNavigate = { navController.navigate(it) },
                 )
             }
             composable<SettingsRoute> {
                 SettingsScreen(
                     onBack = { navController.popBackStack() },
-                    onOpenPaywall = {
-                        paywallLaunchContext.launchFromSettings()
-                        navController.navigate(PaywallRoute)
-                    },
                 )
             }
         }
@@ -125,6 +114,9 @@ fun AppNavHost(
                     BreatheScreen(
                         onNavigateToSession = { goal, patternId ->
                             navController.navigate(BreathingSessionRoute(goal, patternId))
+                        },
+                        onCreateCustomPattern = {
+                            navController.navigate(PatternBuilderRoute)
                         },
                     )
                 }
@@ -149,6 +141,14 @@ fun AppNavHost(
                     },
                 )
             }
+            composable<PatternBuilderRoute> {
+                PatternBuilderScreen(
+                    onBack = { navController.popBackStack() },
+                    onStartSession = { goal, patternId ->
+                        navController.navigate(BreathingSessionRoute(goal, patternId))
+                    },
+                )
+            }
         }
 
         navigation<JournalTabGraph>(startDestination = JournalRoute) {
@@ -167,10 +167,6 @@ fun AppNavHost(
                 MainTabScaffold(navController) {
                     SleepScreen(
                         onNavigateToSession = { navController.navigate(SleepSessionRoute) },
-                        onOpenPaywall = {
-                            paywallLaunchContext.launchFromPremiumFeature()
-                            navController.navigate(PaywallRoute)
-                        },
                     )
                 }
             }
@@ -178,23 +174,7 @@ fun AppNavHost(
                 SleepSessionScreen(onFinished = { navController.popBackStack() })
             }
         }
-
-        composable<PaywallRoute> {
-            PaywallScreen(onDismiss = { navController.popBackStack() })
-        }
     }
-}
-
-/**
- * Navigates, tagging paywall launches from premium features so the paywall
- * hides its close affordance per the PaywallLaunchContext contract.
- */
-private fun NavHostController.navigateWithPaywallContext(
-    launchContext: PaywallLaunchContext,
-    route: Any,
-) {
-    if (route == PaywallRoute) launchContext.launchFromPremiumFeature()
-    navigate(route)
 }
 
 private enum class TabDestination(

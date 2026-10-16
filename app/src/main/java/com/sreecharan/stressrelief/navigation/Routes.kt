@@ -29,11 +29,11 @@ import kotlinx.serialization.Serializable
 
 @Serializable object ProgramsRoute
 
-@Serializable object InsightsRoute // premium-gated
+@Serializable object PatternBuilderRoute // custom breathing pattern builder (v2)
+
+@Serializable object InsightsRoute // free for everyone (v2: premium removed)
 
 @Serializable object SleepSessionRoute // active wind-down (sounds+timer)
-
-@Serializable object PaywallRoute
 
 @Serializable object SettingsRoute
 

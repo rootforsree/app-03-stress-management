@@ -41,13 +41,6 @@ extensions.configure<ApplicationExtension> {
         targetSdk = 36
         versionCode = versionCodeProp
         versionName = versionNameProp
-        // RevenueCat public API key. Set REVENUECAT_API_KEY in the CI/build
-        // environment; empty means billing stays disabled (free tier only).
-        buildConfigField(
-            "String",
-            "REVENUECAT_API_KEY",
-            "\"${System.getenv("REVENUECAT_API_KEY").orEmpty()}\"",
-        )
     }
 
     buildTypes {
@@ -131,8 +124,7 @@ dependencies {
     implementation(libs.coroutines.android)
     implementation(libs.collections.immutable)
     implementation(libs.serialization.json)
-    // RevenueCat billing + Glance home-screen widget (Builder 5).
-    implementation(libs.revenuecat.purchases)
+    // Glance home-screen widget.
     implementation(libs.glance.appwidget)
     implementation(libs.glance.material3)
     // Sideloaded baseline profiles (bundled baseline-prof.txt) need this.

@@ -24,4 +24,19 @@ interface HealthConnectStateProvider {
 
     /** Contract for the Health Connect permission flow; register it in an Activity. */
     fun permissionContract(): ActivityResultContract<Set<String>, Set<String>>
+
+    /** Write permissions needed for session write-back. */
+    fun writePermissions(): Set<String>
+
+    /**
+     * Writes a completed breathing session as an ExerciseSessionRecord
+     * (EXERCISE_TYPE_GUIDED_BREATHING — the Health Connect constant; no plain
+     * EXERCISE_TYPE_BREATHING exists). Returns false on any failure
+     * (unavailable, permission denied, invalid window, write error).
+     * Never throws.
+     */
+    suspend fun writeBreathingSession(
+        startMs: Long,
+        endMs: Long,
+    ): Boolean
 }

@@ -1,7 +1,5 @@
 package com.sreecharan.stressrelief.ui.sleep
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Waves
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -35,10 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -49,12 +43,11 @@ import com.sreecharan.stressrelief.ui.components.AuroraButton
 /**
  * Sleep mixer (SleepRoute): toggleable generated sound layers with per-layer
  * volume, a timer picker, and the big gradient "Begin wind-down" button.
- * Premium layers show a lock and route to the paywall.
+ * All sound layers are free for everyone.
  */
 @Composable
 fun SleepScreen(
     onNavigateToSession: () -> Unit,
-    onOpenPaywall: () -> Unit,
     viewModel: SleepViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -63,7 +56,6 @@ fun SleepScreen(
         viewModel.events.collect { event ->
             when (event) {
                 SleepEvent.NavigateToSession -> onNavigateToSession()
-                SleepEvent.OpenPaywall -> onOpenPaywall()
             }
         }
     }
@@ -81,7 +73,6 @@ fun SleepScreen(
                 onLayerToggled = viewModel::onLayerToggled,
                 onVolumeChanged = viewModel::onVolumeChanged,
                 onTimerSelected = viewModel::onTimerSelected,
-                onUpsellClicked = viewModel::onPremiumUpsellClicked,
                 onBeginClicked = viewModel::onBeginClicked,
             )
         }
@@ -95,7 +86,6 @@ private fun SleepMixerContent(
     onLayerToggled: (String, Boolean) -> Unit,
     onVolumeChanged: (String, Float) -> Unit,
     onTimerSelected: (Int?) -> Unit,
-    onUpsellClicked: () -> Unit,
     onBeginClicked: () -> Unit,
 ) {
     LazyColumn(
@@ -135,12 +125,6 @@ private fun SleepMixerContent(
                 onToggled = { enabled -> onLayerToggled(layerState.layer.id, enabled) },
                 onVolumeChanged = { volume -> onVolumeChanged(layerState.layer.id, volume) },
             )
-        }
-
-        if (!state.isPremium && !state.billingLoading) {
-            item {
-                PremiumUpsellCard(onClicked = onUpsellClicked)
-            }
         }
 
         item {
@@ -205,45 +189,19 @@ private fun SoundLayerCard(
     onToggled: (Boolean) -> Unit,
     onVolumeChanged: (Float) -> Unit,
 ) {
-    val locked = !layerState.isUnlocked
-    val shape = RoundedCornerShape(22.dp)
-    val colors =
-        CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            ),
+    ) {
+        SoundLayerContent(
+            layerState = layerState,
+            onToggled = onToggled,
+            onVolumeChanged = onVolumeChanged,
         )
-    // A locked layer is one tappable target (role + ripple handled by M3)
-    // that opens the paywall; unlocked layers are plain cards whose Switch
-    // is the only control.
-    if (locked) {
-        val cd =
-            stringResource(
-                R.string.sleep_layer_locked_cd,
-                stringResource(layerState.layer.nameRes),
-            )
-        Card(
-            onClick = { onToggled(true) },
-            modifier = Modifier.fillMaxWidth().semantics { contentDescription = cd },
-            shape = shape,
-            colors = colors,
-        ) {
-            SoundLayerContent(
-                layerState = layerState,
-                onToggled = onToggled,
-                onVolumeChanged = onVolumeChanged,
-            )
-        }
-    } else {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            shape = shape,
-            colors = colors,
-        ) {
-            SoundLayerContent(
-                layerState = layerState,
-                onToggled = onToggled,
-                onVolumeChanged = onVolumeChanged,
-            )
-        }
     }
 }
 
@@ -253,48 +211,25 @@ private fun SoundLayerContent(
     onToggled: (Boolean) -> Unit,
     onVolumeChanged: (Float) -> Unit,
 ) {
-    val locked = !layerState.isUnlocked
     Column(modifier = Modifier.padding(16.dp)) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Icon(
-                imageVector = if (locked) Icons.Filled.Lock else Icons.Filled.Waves,
+                imageVector = Icons.Filled.Waves,
                 contentDescription = null,
-                tint =
-                    if (locked) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.primary
-                    },
+                tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(28.dp),
             )
             Spacer(Modifier.size(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = stringResource(layerState.layer.nameRes),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    if (layerState.layer.isPremium) {
-                        Spacer(Modifier.size(8.dp))
-                        Text(
-                            text = stringResource(R.string.sleep_premium_badge),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.tertiary,
-                            modifier =
-                                Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(
-                                        MaterialTheme.colorScheme.tertiaryContainer,
-                                    ).padding(horizontal = 8.dp, vertical = 2.dp),
-                        )
-                    }
-                }
+                Text(
+                    text = stringResource(layerState.layer.nameRes),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
                 Text(
                     text = stringResource(layerState.layer.descriptionRes),
                     style = MaterialTheme.typography.bodySmall,
@@ -302,65 +237,17 @@ private fun SoundLayerContent(
                 )
             }
             Switch(
-                checked = layerState.isEnabled && layerState.isUnlocked,
+                checked = layerState.isEnabled,
                 onCheckedChange = onToggled,
-                enabled = layerState.isUnlocked,
             )
         }
-        if (layerState.isEnabled && layerState.isUnlocked) {
+        if (layerState.isEnabled) {
             Spacer(Modifier.height(4.dp))
             Slider(
                 value = layerState.volume,
                 onValueChange = onVolumeChanged,
                 valueRange = 0f..1f,
                 modifier = Modifier.fillMaxWidth(),
-            )
-        }
-    }
-}
-
-@Composable
-private fun PremiumUpsellCard(onClicked: () -> Unit) {
-    Card(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onClicked),
-        shape = RoundedCornerShape(22.dp),
-        colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-            ),
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Icon(
-                imageVector = Icons.Filled.Lock,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                modifier = Modifier.size(32.dp),
-            )
-            Spacer(Modifier.size(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.sleep_premium_upsell_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                )
-                Text(
-                    text = stringResource(R.string.sleep_premium_upsell_body),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                )
-            }
-            Text(
-                text = stringResource(R.string.sleep_premium_upsell_cta),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.tertiary,
             )
         }
     }

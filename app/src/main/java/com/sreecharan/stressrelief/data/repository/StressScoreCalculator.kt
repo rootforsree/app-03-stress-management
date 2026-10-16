@@ -66,12 +66,14 @@ object StressScoreCalculator {
             }
 
         val score = finalScore.roundToInt().coerceIn(0, 100)
+        // v2 label bands (contract section 4): 0-25 Low, 26-50 Moderate,
+        // 51-75 High, 76-100 Very high. Higher = more stressed.
         val label =
             when {
-                score >= 75 -> "High"
-                score >= 50 -> "Elevated"
-                score >= 25 -> "Moderate"
-                else -> "Calm"
+                score >= 76 -> "Very high"
+                score >= 51 -> "High"
+                score >= 26 -> "Moderate"
+                else -> "Low"
             }
         return StressScore(score = score, label = label, factors = factors.toList())
     }

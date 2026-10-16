@@ -22,8 +22,9 @@ class FakeBreathingRepository : BreathingRepository {
     val recordedSessions = mutableListOf<RecordedSession>()
     val completedDays = mutableListOf<Pair<String, Int>>()
     val programsFlow = MutableStateFlow<List<ProgramProgress>>(emptyList())
+    val sessionsFlow = MutableStateFlow<List<BreathingSession>>(emptyList())
 
-    override fun observeRecentSessions(limit: Int): Flow<List<BreathingSession>> = flowOf(emptyList())
+    override fun observeRecentSessions(limit: Int): Flow<List<BreathingSession>> = sessionsFlow
 
     override suspend fun recordSession(
         goal: String,
