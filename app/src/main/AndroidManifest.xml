@@ -9,6 +9,7 @@
     <!-- Health Connect (Builder 2): stress signals for the stress score. -->
     <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
     <uses-permission android:name="android.permission.health.READ_SLEEP" />
+    <uses-permission android:name="android.permission.health.READ_RESTING_HEART_RATE" />
 
     <!-- Health Connect (Builder 1, contract section 6): HRV read, breathing
          session write-back, and history for baselines. No

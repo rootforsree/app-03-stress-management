@@ -1,7 +1,10 @@
 package com.sreecharan.stressrelief.ui.home
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -52,8 +55,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -109,6 +116,25 @@ fun HomeScreen(
             viewModel.onHealthPermissionResult()
         }
     val context = LocalContext.current
+    // Notification permission: ask once, up front, so reminders can fire.
+    // (Onboarding only asked when the reminders toggle was flipped, which
+    // most users skip.) A denial is final; we never nag.
+    var notificationsAsked by remember { mutableStateOf(false) }
+    val notificationLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+            notificationsAsked = true
+        }
+    LaunchedEffect(Unit) {
+        if (!notificationsAsked &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
+    }
     HomeContent(
         state = state,
         onNavigate = onNavigate,
