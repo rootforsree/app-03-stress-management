@@ -62,6 +62,23 @@
 
     <string name="settings_version">Version %1$s</string>
 
+    <string name="widget_desc">Today\'s stress score and your current streak, with quick actions.</string>
+    <string name="widget_stress_title">Stress</string>
+    <string name="widget_action_mood">Log mood</string>
+    <string name="widget_action_breathe">Breathe</string>
+    <string name="widget_streak_one">day streak</string>
+    <string name="widget_streak_many">days streak</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_reminders">Reminders</string>
+    <string name="notif_channel_reminders_desc">Morning check-ins, streak nudges, and wind-down prompts.</string>
+    <string name="notif_morning_title">Good morning</string>
+    <string name="notif_morning_body">Take 10 seconds to check in with yourself. Your streak is counting on it.</string>
+    <string name="notif_nudge_title">Your streak needs you</string>
+    <string name="notif_nudge_body">No check-in yet today. One breath, one tap, streak saved.</string>
+    <string name="notif_winddown_title">Time to wind down</string>
+    <string name="notif_winddown_body">Put the day away. A short breathing session sets up better sleep.</string>
+
     <!-- Shared components -->
     <string name="action_retry">Retry</string>
     <string name="placeholder_coming_soon">This screen is on its way</string>
