@@ -37,14 +37,15 @@ internal object JsonCodec {
      * Generic list encoding for @Serializable models (e.g. CustomPattern).
      * Decoding never throws: a corrupt column reads back as an empty list.
      */
-    inline fun <reified T> encodeList(values: List<T>): String = json.encodeToString(values)
+    inline fun <reified T> encodeList(values: List<T>): String =
+        json.encodeToString<List<T>>(values)
 
     inline fun <reified T> decodeList(raw: String): List<T> =
         runCatching {
             if (raw.isBlank()) {
                 emptyList()
             } else {
-                json.decodeFromString(raw)
+                json.decodeFromString<List<T>>(raw)
             }
         }.getOrDefault(emptyList())
 }

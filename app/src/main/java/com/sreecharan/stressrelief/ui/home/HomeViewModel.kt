@@ -411,7 +411,7 @@ class HomeViewModel
                         continueAction =
                             HomeStats.resolveContinueAction(
                                 checkedInToday = partial.todayCheckIn != null,
-                                programs = programs,
+                                programs = partial.programs,
                                 breathingToday = breathingToday,
                                 sleptToday = sleptToday,
                                 hourOfDay = hour,

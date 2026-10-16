@@ -478,7 +478,7 @@ private fun BreathingOrb(
                         val s = orbScale.value
                         scaleX = s
                         scaleY = s
-                        alpha = HALO_ALPHA
+                        this.alpha = HALO_ALPHA
                     }.background(halo, CircleShape),
         )
         // The living gradient creature.
