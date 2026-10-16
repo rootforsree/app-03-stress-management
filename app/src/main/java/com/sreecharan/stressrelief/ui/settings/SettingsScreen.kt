@@ -42,6 +42,7 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -74,9 +75,27 @@ fun SettingsScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val permissionLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-            // The toggle already applies; a denial just means reminders stay silent.
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            // A denial must be honest: the toggle cannot stay ON while the OS
+            // permission is missing, or reminders silently never fire.
+            if (!granted) viewModel.setRemindersEnabled(false)
         }
+
+    // Self-heal installs that persisted reminders ON without the OS permission
+    // (the old ON-by-default): show the toggle OFF so flipping it ON fires the
+    // permission prompt at that moment.
+    val readyState = state as? SettingsUiState.Ready
+    LaunchedEffect(readyState?.remindersEnabled) {
+        if (readyState != null && readyState.remindersEnabled &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.POST_NOTIFICATIONS,
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            viewModel.setRemindersEnabled(false)
+        }
+    }
 
     SettingsContent(
         state = state,

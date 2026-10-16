@@ -24,7 +24,7 @@ sealed interface OnboardingUiState {
         val page: Int,
         val totalPages: Int = TOTAL_PAGES,
         /** Last-page opt-in; persisted as remindersEnabled on finish. */
-        val remindersOptIn: Boolean = true,
+        val remindersOptIn: Boolean = false,
     ) : OnboardingUiState
 
     companion object {
@@ -80,7 +80,7 @@ class OnboardingViewModel
 
         private fun finishOnboarding() {
             viewModelScope.launch(ioDispatcher) {
-                val optIn = (_uiState.value as? OnboardingUiState.Paging)?.remindersOptIn ?: true
+                val optIn = (_uiState.value as? OnboardingUiState.Paging)?.remindersOptIn ?: false
                 settingsRepository.setRemindersEnabled(optIn)
                 settingsRepository.setOnboardingCompleted()
                 // Arms the reminder alarms (no-op while reminders are disabled).

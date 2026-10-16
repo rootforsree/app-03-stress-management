@@ -142,7 +142,13 @@ fun HomeScreen(
         onRetry = viewModel::retry,
         onRefreshScore = viewModel::refreshStressScore,
         onConnectHealth = {
-            healthPermissionLauncher.launch(viewModel.healthConnect.requiredPermissions())
+            // Request reads and the exercise write-back permission together;
+            // the write set was previously never requested, so session
+            // write-back silently no-oped.
+            healthPermissionLauncher.launch(
+                viewModel.healthConnect.requiredPermissions() +
+                    viewModel.healthConnect.writePermissions(),
+            )
         },
         onInstallHealthConnect = {
             val packageName = "com.google.android.apps.healthdata"

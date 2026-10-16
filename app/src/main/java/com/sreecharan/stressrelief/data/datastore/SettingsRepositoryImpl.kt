@@ -42,7 +42,7 @@ class SettingsRepositoryImpl
             dataStore.data.map { prefs -> prefs[Keys.DYNAMIC_COLOR] ?: false }
 
         override val remindersEnabled: Flow<Boolean> =
-            dataStore.data.map { prefs -> prefs[Keys.REMINDERS_ENABLED] ?: true }
+            dataStore.data.map { prefs -> prefs[Keys.REMINDERS_ENABLED] ?: false }
 
         override val quietHours: Flow<QuietHours> =
             dataStore.data.map { prefs ->

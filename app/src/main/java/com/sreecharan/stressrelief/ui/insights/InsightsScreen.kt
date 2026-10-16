@@ -1,5 +1,7 @@
 package com.sreecharan.stressrelief.ui.insights
 
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -40,6 +42,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,6 +59,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.health.connect.client.HealthConnectClient
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sreecharan.stressrelief.R
@@ -70,6 +74,7 @@ import com.sreecharan.stressrelief.ui.components.StaggerIn
 import com.sreecharan.stressrelief.ui.theme.AuroraBrushes
 import com.sreecharan.stressrelief.ui.theme.LocalAuroraDark
 import kotlin.math.abs
+import kotlinx.coroutines.launch
 
 /**
  * Insights screen (v2). Free for everyone: no premium gate, no upsell copy.
@@ -83,6 +88,8 @@ fun InsightsScreen(
     viewModel: InsightsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val healthPermissionLauncher =
         rememberLauncherForActivityResult(viewModel.healthConnect.permissionContract()) {
             viewModel.onHealthPermissionResult()
@@ -90,7 +97,36 @@ fun InsightsScreen(
     InsightsContent(
         state = state,
         onConnectHealth = {
-            healthPermissionLauncher.launch(viewModel.healthConnect.requiredPermissions())
+            // Guarded like the Home banner: never fire the permission contract
+            // when the provider is missing (it would throw out of the click
+            // handler). Offer the Play Store listing instead when an update
+            // or install can fix it.
+            scope.launch {
+                val hc = viewModel.healthConnect
+                when {
+                    hc.isAvailable() ->
+                        healthPermissionLauncher.launch(
+                            hc.requiredPermissions() + hc.writePermissions(),
+                        )
+                    hc.sdkStatus() ==
+                        HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> {
+                        val packageName = "com.google.android.apps.healthdata"
+                        val marketIntent =
+                            Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("market://details?id=$packageName"),
+                            )
+                        val webIntent =
+                            Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("https://play.google.com/store/apps/details?id=$packageName"),
+                            )
+                        runCatching { context.startActivity(marketIntent) }
+                            .onFailure { runCatching { context.startActivity(webIntent) } }
+                    }
+                    else -> Unit
+                }
+            }
         },
         onRetry = viewModel::retry,
     )
