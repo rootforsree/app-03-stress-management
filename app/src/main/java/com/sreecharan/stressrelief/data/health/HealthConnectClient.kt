@@ -299,8 +299,6 @@ class HealthConnectClient(
     }
 }
 
-private fun SleepStageSegment.durationMs(): Long = (endMs - startMs).coerceAtLeast(0L)
-
 /** True for stages that count as asleep when scoring. Visible inside the module for the repository. */
 internal fun SleepStageType.isAsleep(): Boolean =
     this == SleepStageType.LIGHT ||
