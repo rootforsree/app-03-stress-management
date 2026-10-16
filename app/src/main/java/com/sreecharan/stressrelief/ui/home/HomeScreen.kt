@@ -8,6 +8,7 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -76,6 +77,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -186,6 +188,16 @@ private fun HomeContent(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
+                navigationIcon = {
+                    Image(
+                        painter = painterResource(R.drawable.ic_launcher_foreground),
+                        contentDescription = stringResource(R.string.app_name),
+                        modifier = Modifier
+                            .padding(start = 12.dp)
+                            .size(40.dp)
+                            .clip(CircleShape),
+                    )
+                },
                 title = {
                     Text(
                         stringResource(R.string.app_name),
@@ -263,13 +275,18 @@ private fun HomeDashboard(
             ),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        item {
+        // Every item carries a stable key: the Health Connect banner and the
+        // continue card are inserted/removed as async state resolves, and
+        // without keys every item below the insertion shifts index, which
+        // resets StaggerIn's remembered state and replays (previously:
+        // collapsing) the entrance, yanking the scroll position to the top.
+        item(key = "greeting") {
             GreetingHeader(
                 state = state,
                 onNudgeClick = { onNavigate(BreatheRoute) },
             )
         }
-        item {
+        item(key = "hero") {
             StaggerIn(0) {
                 StressHeroCard(
                     state = state,
@@ -279,7 +296,7 @@ private fun HomeDashboard(
             }
         }
         state.continueAction?.let { action ->
-            item {
+            item(key = "continue") {
                 StaggerIn(1) {
                     ContinueCard(
                         action = action,
@@ -292,7 +309,7 @@ private fun HomeDashboard(
         // Health Connect is installed but the stress-signal permissions were
         // never granted: a slim in-context opt-in.
         if (state.healthConnectState == HealthConnectUiState.Available) {
-            item {
+            item(key = "health_banner") {
                 HealthConnectBanner(
                     text = stringResource(R.string.home_health_banner_available),
                     cta = stringResource(R.string.home_health_cta),
@@ -302,7 +319,7 @@ private fun HomeDashboard(
         }
         // Health Connect itself is missing: guide the user to the Play Store.
         if (state.healthConnectState == HealthConnectUiState.NeedsInstall) {
-            item {
+            item(key = "health_banner") {
                 HealthConnectBanner(
                     text = stringResource(R.string.home_health_banner_install),
                     cta = stringResource(R.string.home_health_install_cta),
@@ -310,7 +327,7 @@ private fun HomeDashboard(
                 )
             }
         }
-        item {
+        item(key = "week") {
             StaggerIn(2) {
                 YourWeekCard(
                     state = state,
@@ -318,13 +335,13 @@ private fun HomeDashboard(
                 )
             }
         }
-        item {
+        item(key = "quick_actions") {
             StaggerIn(3) {
                 AuraSectionTitle(stringResource(R.string.home_quick_actions))
                 QuickActionsGrid(onNavigate = onNavigate)
             }
         }
-        item {
+        item(key = "today_prompt") {
             StaggerIn(4) {
                 TodayPromptCard(
                     prompt = state.todayPrompt,
@@ -332,7 +349,7 @@ private fun HomeDashboard(
                 )
             }
         }
-        item {
+        item(key = "wind_down") {
             StaggerIn(5) {
                 WindDownCard(
                     state = state,
@@ -340,7 +357,7 @@ private fun HomeDashboard(
                 )
             }
         }
-        item {
+        item(key = "insights_entry") {
             StaggerIn(6) {
                 InsightsEntryCard(onClick = { onNavigate(InsightsRoute) })
             }

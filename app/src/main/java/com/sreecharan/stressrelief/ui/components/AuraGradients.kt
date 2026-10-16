@@ -1,9 +1,8 @@
 package com.sreecharan.stressrelief.ui.components
 
 import android.provider.Settings
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -20,9 +19,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.sreecharan.stressrelief.ui.theme.AuroraBrushes
 import com.sreecharan.stressrelief.ui.theme.LocalAuroraDark
@@ -92,6 +91,14 @@ fun rememberReduceMotion(): Boolean {
  * Staggered card entrance: fade plus a small rise, delayed per index.
  * Uses the shared [MotionTokens] stagger window (30-50ms per item).
  * With reduced motion on, content renders immediately with no animation.
+ *
+ * Implemented as alpha/translation animations on a full-size box, never
+ * AnimatedVisibility: the content is always laid out at its final size, so
+ * staggered items never collapse to zero height (which yanked LazyColumn
+ * scroll position when conditional items were inserted above them) and no
+ * slide clip bounds ever cut the content (which produced the clipped
+ * section-title artifacts: only the first letter rendering at the card's
+ * left edge).
  */
 @Composable
 fun StaggerIn(
@@ -108,15 +115,22 @@ fun StaggerIn(
         delay(MotionTokens.staggerDelayMs(index).toLong())
         visible = true
     }
-    val density = LocalDensity.current
-    AnimatedVisibility(
-        visible = visible,
-        enter =
-            fadeIn(MotionTokens.GentleSpring) +
-                slideInVertically(MotionTokens.gentleSpring<IntOffset>()) {
-                    with(density) { MotionTokens.ENTRANCE_RISE_DP.dp.roundToPx() }
-                },
-        modifier = modifier,
+    val risePx = with(LocalDensity.current) { MotionTokens.ENTRANCE_RISE_DP.dp.roundToPx() }
+    val alpha by animateFloatAsState(
+        targetValue = if (visible) 1f else 0f,
+        animationSpec = MotionTokens.GentleSpring,
+        label = "staggerFade",
+    )
+    val offsetYPx by animateIntAsState(
+        targetValue = if (visible) 0 else risePx,
+        animationSpec = MotionTokens.gentleSpring(),
+        label = "staggerRise",
+    )
+    Box(
+        modifier.graphicsLayer {
+            this.alpha = alpha
+            this.translationY = offsetYPx.toFloat()
+        },
     ) {
         content()
     }

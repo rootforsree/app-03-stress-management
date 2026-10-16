@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -32,7 +32,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -48,6 +51,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -94,6 +98,7 @@ fun BreatheScreen(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BreatheScreenContent(
     state: BreatheUiState,
@@ -114,37 +119,45 @@ private fun BreatheScreenContent(
         }
 
         is BreatheUiState.Content -> {
-            Column(modifier = Modifier.fillMaxSize().statusBarsPadding()) {
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = stringResource(R.string.breathe_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    text = stringResource(R.string.breathe_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 20.dp),
-                )
-                Spacer(Modifier.height(16.dp))
-                DiarySection(
-                    days = state.diary,
-                    goalMin = state.goalMin,
-                    onGoalChange = onGoalChange,
-                )
-                Spacer(Modifier.height(16.dp))
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    modifier = Modifier.weight(1f),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    itemsIndexed(state.goals, key = { _, goal -> goal.goal }) { index, goal ->
-                        GoalCard(goal = goal, index = index, onClick = { onGoalClick(goal.goal) })
+            // Fixed top bar like Home/Insights/Journal, so the header pattern
+            // and the 8dp top content padding are uniform across all tabs.
+            // The diary stays fixed under the bar (it was already fixed); only
+            // the goal grid scrolls. Note: no statusBarsPadding() here —
+            // MainTabScaffold's Scaffold already applies the system-bar insets,
+            // and this inner Scaffold opts out of adding them a second time.
+            Scaffold(
+                contentWindowInsets = WindowInsets(0, 0, 0, 0),
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                stringResource(R.string.breathe_title),
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Black,
+                            )
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                    )
+                },
+            ) { padding ->
+                Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+                    Spacer(Modifier.height(8.dp))
+                    DiarySection(
+                        days = state.diary,
+                        goalMin = state.goalMin,
+                        onGoalChange = onGoalChange,
+                    )
+                    Spacer(Modifier.height(16.dp))
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        modifier = Modifier.weight(1f),
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        itemsIndexed(state.goals, key = { _, goal -> goal.goal }) { index, goal ->
+                            GoalCard(goal = goal, index = index, onClick = { onGoalClick(goal.goal) })
+                        }
                     }
                 }
             }

@@ -200,33 +200,37 @@ private fun InsightsDashboard(
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        // Stable keys: the connect banner is inserted/removed as Health
+        // Connect state resolves, and without keys every item below it
+        // shifts index, resetting StaggerIn's remembered state and replaying
+        // the entrance for the whole list.
         if (!insights.healthConnected) {
-            item {
+            item(key = "health_banner") {
                 StaggerIn(0) {
                     ConnectHealthBanner(onConnect = onConnectHealth)
                 }
             }
         }
-        item {
+        item(key = "recovery") {
             StaggerIn(1) {
                 AuraSectionTitle(stringResource(R.string.insights_recovery_title))
                 RecoveryHeroCard(insights = insights)
             }
         }
-        item {
+        item(key = "sleep") {
             StaggerIn(2) {
                 AuraSectionTitle(stringResource(R.string.insights_sleep_title))
                 SleepSectionCard(insights = insights)
             }
         }
-        item {
+        item(key = "heart") {
             StaggerIn(3) {
                 AuraSectionTitle(stringResource(R.string.insights_heart_title))
                 HeartSectionCard(insights = insights)
             }
         }
         if (insights.insightCards.isNotEmpty()) {
-            item {
+            item(key = "cards") {
                 StaggerIn(4) {
                     AuraSectionTitle(stringResource(R.string.insights_cards_title))
                     InsightCardsList(cards = insights.insightCards)
