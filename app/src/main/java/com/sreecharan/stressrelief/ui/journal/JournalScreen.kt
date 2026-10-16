@@ -34,7 +34,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -184,19 +186,18 @@ private fun JournalCard(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val dismissState =
-        rememberSwipeToDismissBoxState(
-            confirmValueChange = { value ->
-                if (value == SwipeToDismissBoxValue.EndToStart) {
-                    onDelete()
-                    true
-                } else {
-                    false
-                }
-            },
-        )
+    val dismissState = rememberSwipeToDismissBoxState()
+    val currentOnDelete by rememberUpdatedState(onDelete)
+    LaunchedEffect(dismissState.currentValue) {
+        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+            currentOnDelete()
+        }
+    }
     SwipeToDismissBox(
         state = dismissState,
+        // confirmValueChange is deprecated: disallowed directions are removed
+        // from the anchor set instead of vetoed in a callback.
+        enableDismissFromStartToEnd = false,
         backgroundContent = {
             Box(
                 Modifier

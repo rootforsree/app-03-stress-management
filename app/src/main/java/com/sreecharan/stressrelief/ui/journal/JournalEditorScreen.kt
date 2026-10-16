@@ -102,7 +102,7 @@ private fun JournalEditorContent(
                 actions = {
                     TextButton(
                         onClick = onSave,
-                        enabled = editing?.canSave == true && state !is JournalEditorUiState.Saving,
+                        enabled = editing?.canSave == true,
                     ) {
                         Text(
                             stringResource(R.string.b4_action_save),
@@ -214,7 +214,7 @@ private fun JournalEditorContent(
                             text = stringResource(R.string.b4_action_save),
                             onClick = onSave,
                             gradient = true,
-                            enabled = state.canSave && state !is JournalEditorUiState.Saving,
+                            enabled = state.canSave,
                             modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
                         )
                         Spacer(Modifier.height(8.dp))

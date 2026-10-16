@@ -10,6 +10,7 @@ import com.sreecharan.stressrelief.data.repository.BreathingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -83,6 +84,7 @@ class ProgramsViewModel
         private val _events = Channel<ProgramsEvent>(Channel.BUFFERED)
         val events: Flow<ProgramsEvent> = _events.receiveAsFlow()
 
+        @OptIn(ExperimentalCoroutinesApi::class)
         val uiState: StateFlow<ProgramsUiState> =
             retryTrigger
                 .flatMapLatest { programsFlow() }

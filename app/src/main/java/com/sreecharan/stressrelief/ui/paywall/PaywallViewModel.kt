@@ -97,7 +97,7 @@ class PaywallViewModel
                         }
 
                         EntitlementState.Loading -> {
-                            Unit
+                            // No-op: still waiting for the entitlement state.
                         }
                     }
                 }

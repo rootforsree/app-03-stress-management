@@ -19,10 +19,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingFlat
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Bedtime
-import androidx.compose.material.icons.filled.TrendingDown
-import androidx.compose.material.icons.filled.TrendingFlat
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -186,10 +186,22 @@ private fun TrendCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val (icon, tint) =
                     when {
-                        delta == null -> Icons.Filled.TrendingFlat to MaterialTheme.colorScheme.onSurfaceVariant
-                        delta > 0.05 -> Icons.Filled.TrendingUp to MaterialTheme.colorScheme.primary
-                        delta < -0.05 -> Icons.Filled.TrendingDown to MaterialTheme.colorScheme.tertiary
-                        else -> Icons.Filled.TrendingFlat to MaterialTheme.colorScheme.onSurfaceVariant
+                        delta == null -> {
+                            Icons.AutoMirrored.Filled.TrendingFlat to
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                        }
+
+                        delta > 0.05 -> {
+                            Icons.AutoMirrored.Filled.TrendingUp to MaterialTheme.colorScheme.primary
+                        }
+
+                        delta < -0.05 -> {
+                            Icons.AutoMirrored.Filled.TrendingDown to MaterialTheme.colorScheme.tertiary
+                        }
+
+                        else -> {
+                            Icons.AutoMirrored.Filled.TrendingFlat to MaterialTheme.colorScheme.onSurfaceVariant
+                        }
                     }
                 Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
                 Spacer(Modifier.width(8.dp))

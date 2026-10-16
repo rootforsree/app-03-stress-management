@@ -49,18 +49,15 @@ class OnboardingViewModel
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
         private val scheduler: AuraReminderScheduler,
     ) : ViewModel() {
-        private val _uiState = MutableStateFlow(OnboardingUiState.Paging(page = 0))
+        private val _uiState = MutableStateFlow<OnboardingUiState>(OnboardingUiState.Paging(page = 0))
         val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
 
         private val _events = Channel<OnboardingEvent>(Channel.BUFFERED)
         val events: Flow<OnboardingEvent> = _events.receiveAsFlow()
 
         fun onPageChanged(page: Int) {
-            _uiState.update { current ->
-                when (current) {
-                    is OnboardingUiState.Paging -> current.copy(page = page)
-                }
-            }
+            val current = _uiState.value as? OnboardingUiState.Paging ?: return
+            _uiState.value = current.copy(page = page)
         }
 
         fun onNext() {
@@ -77,11 +74,8 @@ class OnboardingViewModel
         }
 
         fun onRemindersOptInChanged(optIn: Boolean) {
-            _uiState.update { current ->
-                when (current) {
-                    is OnboardingUiState.Paging -> current.copy(remindersOptIn = optIn)
-                }
-            }
+            val current = _uiState.value as? OnboardingUiState.Paging ?: return
+            _uiState.value = current.copy(remindersOptIn = optIn)
         }
 
         private fun finishOnboarding() {
