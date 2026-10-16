@@ -84,19 +84,27 @@ fun ProGate(
     val isPremium =
         when (val s = state) {
             is EntitlementState.Ready -> s.isPremium
+
             // While loading, hold the previous frame: never flash locked UI
             // at a paying user, and never flash paid UI at a free user.
             else -> null
         }
     when (isPremium) {
-        true -> content()
-        false ->
+        true -> {
+            content()
+        }
+
+        false -> {
             ProLockedCard(
                 title = lockedTitle,
                 body = lockedBody,
                 onShowPaywall = onShowPaywall,
             )
-        null -> BillingLoadingSplash()
+        }
+
+        null -> {
+            BillingLoadingSplash()
+        }
     }
 }
 

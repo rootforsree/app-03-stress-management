@@ -8,7 +8,10 @@ import com.sreecharan.stressrelief.data.model.DailyActivity
  * streak as long as yesterday had activity.
  */
 object StreakCalculator {
-    fun computeStreak(activities: List<DailyActivity>, todayEpochDay: Long): Int {
+    fun computeStreak(
+        activities: List<DailyActivity>,
+        todayEpochDay: Long,
+    ): Int {
         val byDay = activities.associateBy { it.dateEpochDay }
         var streak = 0
         var day = todayEpochDay

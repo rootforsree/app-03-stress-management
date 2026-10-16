@@ -54,14 +54,16 @@ data class BreathingPatternSpec(
  * INHALE(4s) -> EXHALE(6s) per round. All math is integer milliseconds;
  * [positionAt] returns null once the final round ends.
  */
-class BreathingPhaseMachine(val spec: BreathingPatternSpec) {
-
-    val slices: List<PhaseSlice> = buildList {
-        if (spec.inhaleSec > 0) add(PhaseSlice(BreathPhase.INHALE, spec.inhaleSec * MS_PER_SEC))
-        if (spec.holdSec > 0) add(PhaseSlice(BreathPhase.HOLD, spec.holdSec * MS_PER_SEC))
-        if (spec.exhaleSec > 0) add(PhaseSlice(BreathPhase.EXHALE, spec.exhaleSec * MS_PER_SEC))
-        if (spec.holdAfterSec > 0) add(PhaseSlice(BreathPhase.HOLD_AFTER, spec.holdAfterSec * MS_PER_SEC))
-    }
+class BreathingPhaseMachine(
+    val spec: BreathingPatternSpec,
+) {
+    val slices: List<PhaseSlice> =
+        buildList {
+            if (spec.inhaleSec > 0) add(PhaseSlice(BreathPhase.INHALE, spec.inhaleSec * MS_PER_SEC))
+            if (spec.holdSec > 0) add(PhaseSlice(BreathPhase.HOLD, spec.holdSec * MS_PER_SEC))
+            if (spec.exhaleSec > 0) add(PhaseSlice(BreathPhase.EXHALE, spec.exhaleSec * MS_PER_SEC))
+            if (spec.holdAfterSec > 0) add(PhaseSlice(BreathPhase.HOLD_AFTER, spec.holdAfterSec * MS_PER_SEC))
+        }
 
     val roundDurationMs: Long = slices.sumOf { it.durationMs }
 

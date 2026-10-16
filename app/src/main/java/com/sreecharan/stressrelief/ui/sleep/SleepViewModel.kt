@@ -1,8 +1,8 @@
 package com.sreecharan.stressrelief.ui.sleep
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.compose.runtime.Immutable
 import com.sreecharan.stressrelief.data.billing.BillingRepository
 import com.sreecharan.stressrelief.data.billing.EntitlementState
 import com.sreecharan.stressrelief.ui.paywall.PaywallLaunchContext
@@ -80,14 +80,15 @@ class SleepViewModel
             _uiState.value =
                 SleepUiState.Content(
                     layers =
-                        SleepSoundLayers.ALL.map { layer ->
-                            SleepLayerUiState(
-                                layer = layer,
-                                isEnabled = layer.id == "rain",
-                                volume = 0.7f,
-                                isUnlocked = !layer.isPremium,
-                            )
-                        }.toImmutableList(),
+                        SleepSoundLayers.ALL
+                            .map { layer ->
+                                SleepLayerUiState(
+                                    layer = layer,
+                                    isEnabled = layer.id == "rain",
+                                    volume = 0.7f,
+                                    isUnlocked = !layer.isPremium,
+                                )
+                            }.toImmutableList(),
                 )
             viewModelScope.launch {
                 billing.entitlement.collect { state ->
@@ -95,9 +96,11 @@ class SleepViewModel
                         is EntitlementState.Ready -> {
                             applyPremium(state.isPremium, loading = false)
                         }
+
                         EntitlementState.Loading -> {
                             applyPremium(isPremium = false, loading = true)
                         }
+
                         EntitlementState.Unavailable -> {
                             applyPremium(isPremium = false, loading = false)
                         }
@@ -107,7 +110,10 @@ class SleepViewModel
             refreshCanBegin()
         }
 
-        fun onLayerToggled(layerId: String, enabled: Boolean) {
+        fun onLayerToggled(
+            layerId: String,
+            enabled: Boolean,
+        ) {
             val current = _uiState.value as? SleepUiState.Content ?: return
             val target = current.layers.find { it.layer.id == layerId } ?: return
             if (enabled && !target.isUnlocked) {
@@ -117,25 +123,30 @@ class SleepViewModel
             updateContent { state ->
                 state.copy(
                     layers =
-                        state.layers.map {
-                            if (it.layer.id == layerId) it.copy(isEnabled = enabled) else it
-                        }.toImmutableList(),
+                        state.layers
+                            .map {
+                                if (it.layer.id == layerId) it.copy(isEnabled = enabled) else it
+                            }.toImmutableList(),
                 )
             }
             refreshCanBegin()
         }
 
-        fun onVolumeChanged(layerId: String, volume: Float) {
+        fun onVolumeChanged(
+            layerId: String,
+            volume: Float,
+        ) {
             updateContent { state ->
                 state.copy(
                     layers =
-                        state.layers.map {
-                            if (it.layer.id == layerId) {
-                                it.copy(volume = volume.coerceIn(0f, 1f))
-                            } else {
-                                it
-                            }
-                        }.toImmutableList(),
+                        state.layers
+                            .map {
+                                if (it.layer.id == layerId) {
+                                    it.copy(volume = volume.coerceIn(0f, 1f))
+                                } else {
+                                    it
+                                }
+                            }.toImmutableList(),
                 )
             }
         }
@@ -165,15 +176,19 @@ class SleepViewModel
             viewModelScope.launch { _events.send(SleepEvent.OpenPaywall) }
         }
 
-        private fun applyPremium(isPremium: Boolean, loading: Boolean) {
+        private fun applyPremium(
+            isPremium: Boolean,
+            loading: Boolean,
+        ) {
             updateContent { state ->
                 state.copy(
                     isPremium = isPremium,
                     billingLoading = loading,
                     layers =
-                        state.layers.map {
-                            it.copy(isUnlocked = !it.layer.isPremium || isPremium)
-                        }.toImmutableList(),
+                        state.layers
+                            .map {
+                                it.copy(isUnlocked = !it.layer.isPremium || isPremium)
+                            }.toImmutableList(),
                 )
             }
             refreshCanBegin()

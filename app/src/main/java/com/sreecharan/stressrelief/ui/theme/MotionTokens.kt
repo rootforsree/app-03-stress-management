@@ -20,9 +20,9 @@ object MotionTokens {
     val CelebrationSpring: FiniteAnimationSpec<Float> = spring(stiffness = 300f, dampingRatio = 0.6f)
 
     /** Generic typed springs for non-Float targets (Dp, Offset, ...). */
-    fun <T> gentleSpring(): AnimationSpec<T> = spring(stiffness = 250f, dampingRatio = 0.85f)
+    fun <T> gentleSpring(): FiniteAnimationSpec<T> = spring(stiffness = 250f, dampingRatio = 0.85f)
 
-    fun <T> celebrationSpring(): AnimationSpec<T> = spring(stiffness = 300f, dampingRatio = 0.6f)
+    fun <T> celebrationSpring(): FiniteAnimationSpec<T> = spring(stiffness = 300f, dampingRatio = 0.6f)
 
     /** Entrance stagger window: 30-50ms per item, fade + 16dp rise. */
     const val STAGGER_MIN_MS = 30
@@ -30,8 +30,7 @@ object MotionTokens {
     const val STAGGER_MAX_TOTAL_MS = 400
 
     /** Stagger delay for the [index]-th entering item, capped so long lists stay snappy. */
-    fun staggerDelayMs(index: Int): Int =
-        (STAGGER_MIN_MS + index * STAGGER_STEP_MS).coerceAtMost(STAGGER_MAX_TOTAL_MS)
+    fun staggerDelayMs(index: Int): Int = (STAGGER_MIN_MS + index * STAGGER_STEP_MS).coerceAtMost(STAGGER_MAX_TOTAL_MS)
 
     /** Entrance rise distance for staggered cards. */
     const val ENTRANCE_RISE_DP = 16

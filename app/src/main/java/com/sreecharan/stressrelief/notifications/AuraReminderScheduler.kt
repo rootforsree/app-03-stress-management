@@ -5,12 +5,12 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import com.sreecharan.stressrelief.di.IoDispatcher
 import com.sreecharan.stressrelief.data.reminders.ReminderPreferences
 import com.sreecharan.stressrelief.data.reminders.ReminderRepository
 import com.sreecharan.stressrelief.data.reminders.ReminderTimes
 import com.sreecharan.stressrelief.data.reminders.ReminderType
 import com.sreecharan.stressrelief.data.repository.SettingsRepository
+import com.sreecharan.stressrelief.di.IoDispatcher
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.first
@@ -92,7 +92,10 @@ class AuraReminderScheduler
             scheduleExact(trigger, pendingIntent(action, req))
         }
 
-        private fun pendingIntent(action: String, requestCode: Int): PendingIntent {
+        private fun pendingIntent(
+            action: String,
+            requestCode: Int,
+        ): PendingIntent {
             val intent = Intent(context, AuraReminderReceiver::class.java).setAction(action)
             return PendingIntent.getBroadcast(
                 context,
@@ -107,7 +110,10 @@ class AuraReminderScheduler
          * SCHEDULE_EXACT_ALARM. Callers should surface the "may arrive late"
          * note when [canScheduleExact] is false.
          */
-        private fun scheduleExact(triggerAtMillis: Long, pendingIntent: PendingIntent) {
+        private fun scheduleExact(
+            triggerAtMillis: Long,
+            pendingIntent: PendingIntent,
+        ) {
             val am = alarmManager ?: return
             try {
                 if (canScheduleExact()) {

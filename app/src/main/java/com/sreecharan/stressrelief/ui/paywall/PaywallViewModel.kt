@@ -90,11 +90,15 @@ class PaywallViewModel
                                 _events.send(PaywallEvent.Dismiss)
                             }
                         }
+
                         EntitlementState.Unavailable -> {
                             billingUnavailable = true
                             updateContent { it.copy(billingUnavailable = true) }
                         }
-                        EntitlementState.Loading -> Unit
+
+                        EntitlementState.Loading -> {
+                            Unit
+                        }
                     }
                 }
             }
@@ -138,10 +142,12 @@ class PaywallViewModel
                         // sender); just release the button here.
                         updateContent { it.copy(isPurchasing = false) }
                     }
+
                     PurchaseResult.Cancelled -> {
                         // Normal: user dismissed the Play sheet. Stay on paywall.
                         updateContent { it.copy(isPurchasing = false) }
                     }
+
                     is PurchaseResult.Failed -> {
                         updateContent {
                             it.copy(

@@ -17,7 +17,9 @@ object SynthMath {
     const val SAMPLE_RATE = 44100
 
     /** Per-layer filter/LFO state. One instance per playback run. */
-    class SynthState(seed: Long = 0L) {
+    class SynthState(
+        seed: Long = 0L,
+    ) {
         val random = Random(seed)
         var brown = 0f
         var rainLowpass = 0f
@@ -138,7 +140,10 @@ object SynthMath {
      * Renders one mixed sample. [mix] maps layer id to volume 0..1; layers
      * absent or at 0 are skipped. Output is soft-clipped to [-1, 1].
      */
-    fun mixSample(state: SynthState, mix: Map<String, Float>): Float {
+    fun mixSample(
+        state: SynthState,
+        mix: Map<String, Float>,
+    ): Float {
         if (mix.isEmpty()) return 0f
         var sum = 0f
         for ((id, volume) in mix) {

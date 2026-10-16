@@ -19,12 +19,16 @@ import javax.inject.Inject
 class AuraBootReceiver : BroadcastReceiver() {
     @Inject lateinit var scheduler: AuraReminderScheduler
 
-    @Inject @IoDispatcher lateinit var ioDispatcher: CoroutineDispatcher
+    @Inject @IoDispatcher
+    lateinit var ioDispatcher: CoroutineDispatcher
 
-    override fun onReceive(context: Context, intent: Intent) {
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) {
         when (intent.action) {
             Intent.ACTION_BOOT_COMPLETED,
-            Intent.ACTION_TIME_SET,
+            Intent.ACTION_TIME_CHANGED,
             Intent.ACTION_TIMEZONE_CHANGED,
             Intent.ACTION_LOCALE_CHANGED,
             -> {

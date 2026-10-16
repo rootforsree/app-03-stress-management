@@ -2,10 +2,10 @@ package com.sreecharan.stressrelief.ui.sleep
 
 import android.app.Activity
 import app.cash.turbine.test
+import com.sreecharan.stressrelief.data.billing.BillingPlan
 import com.sreecharan.stressrelief.data.billing.BillingRepository
 import com.sreecharan.stressrelief.data.billing.EntitlementState
 import com.sreecharan.stressrelief.data.billing.PurchaseResult
-import com.sreecharan.stressrelief.data.billing.BillingPlan
 import com.sreecharan.stressrelief.ui.paywall.PaywallLaunchContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -27,9 +27,14 @@ private class FakeBillingRepository : BillingRepository {
     val entitlementState = MutableStateFlow<EntitlementState>(EntitlementState.Loading)
     override val entitlement: StateFlow<EntitlementState> = entitlementState
     override val plans: StateFlow<List<BillingPlan>?> = MutableStateFlow(null)
+
     override suspend fun refresh() = Unit
-    override suspend fun purchase(activity: Activity, plan: BillingPlan): PurchaseResult =
-        PurchaseResult.Cancelled
+
+    override suspend fun purchase(
+        activity: Activity,
+        plan: BillingPlan,
+    ): PurchaseResult = PurchaseResult.Cancelled
+
     override suspend fun restore(): Boolean = false
 }
 

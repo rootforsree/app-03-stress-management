@@ -1,6 +1,5 @@
 package com.sreecharan.stressrelief.data.repository
 
-import com.sreecharan.stressrelief.di.IoDispatcher
 import com.sreecharan.stressrelief.data.health.HealthConnectClient
 import com.sreecharan.stressrelief.data.local.BreathingSessionDao
 import com.sreecharan.stressrelief.data.local.DailyActivityDao
@@ -15,6 +14,7 @@ import com.sreecharan.stressrelief.data.model.JournalEntry
 import com.sreecharan.stressrelief.data.model.MoodCheckIn
 import com.sreecharan.stressrelief.data.model.StressScore
 import com.sreecharan.stressrelief.data.util.TimeUtils
+import com.sreecharan.stressrelief.di.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -52,7 +52,11 @@ class WellnessRepositoryImpl
                 .flowOn(ioDispatcher)
         }
 
-        override suspend fun saveMoodCheckIn(score: Int, activities: List<String>, note: String) {
+        override suspend fun saveMoodCheckIn(
+            score: Int,
+            activities: List<String>,
+            note: String,
+        ) {
             withContext(ioDispatcher) {
                 moodCheckInDao.insert(
                     MoodCheckInEntity(
@@ -78,7 +82,10 @@ class WellnessRepositoryImpl
                 .map { it?.toDomain() }
                 .flowOn(ioDispatcher)
 
-        override suspend fun saveJournalEntry(prompt: String, text: String): Long =
+        override suspend fun saveJournalEntry(
+            prompt: String,
+            text: String,
+        ): Long =
             withContext(ioDispatcher) {
                 val id =
                     journalDao.insert(
@@ -92,7 +99,10 @@ class WellnessRepositoryImpl
                 id
             }
 
-        override suspend fun updateJournalEntry(id: Long, text: String) {
+        override suspend fun updateJournalEntry(
+            id: Long,
+            text: String,
+        ) {
             withContext(ioDispatcher) {
                 val existing = journalDao.observeById(id).first() ?: return@withContext
                 journalDao.update(existing.copy(text = text))
@@ -110,8 +120,7 @@ class WellnessRepositoryImpl
                 .observeLastNDays(STREAK_LOOKBACK_DAYS)
                 .map { rows ->
                     StreakCalculator.computeStreak(rows.map { it.toDomain() }, TimeUtils.todayEpochDay())
-                }
-                .flowOn(ioDispatcher)
+                }.flowOn(ioDispatcher)
 
         override fun observeTotalCalmMinutes(): Flow<Int> =
             breathingSessionDao.observeTotalMinutes().flowOn(ioDispatcher)

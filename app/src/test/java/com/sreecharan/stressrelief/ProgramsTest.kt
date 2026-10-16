@@ -16,7 +16,10 @@ class ProgramsTest {
 
     @Test
     fun `every program day references a real pattern`() {
-        val ids = com.sreecharan.stressrelief.data.catalog.BreathingPatterns.all.map { it.id }.toSet()
+        val ids =
+            com.sreecharan.stressrelief.data.catalog.BreathingPatterns.all
+                .map { it.id }
+                .toSet()
         Programs.all.flatMap { it.days }.forEach { day ->
             assertTrue(day.patternId in ids, "Unknown pattern ${day.patternId}")
         }
@@ -76,7 +79,10 @@ class ProgramsTest {
     @Test
     fun `journal prompts rotate twenty`() {
         assertEquals(20, com.sreecharan.stressrelief.data.catalog.journalPrompts.size)
-        assertTrue(com.sreecharan.stressrelief.data.catalog.journalPrompts.all { it.isNotBlank() })
+        assertTrue(
+            com.sreecharan.stressrelief.data.catalog.journalPrompts
+                .all { it.isNotBlank() },
+        )
     }
 
     @Test

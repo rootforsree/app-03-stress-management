@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class BreatheViewModelTest {
-
     @Test
     fun `emits four goal cards from the catalog`() {
         val vm = BreatheViewModel()
@@ -39,24 +38,26 @@ class BreatheViewModelTest {
     }
 
     @Test
-    fun `pattern click emits open session and closes the picker`() = runTest {
-        val vm = BreatheViewModel()
-        vm.onGoalClick("CALM")
-        vm.events.test {
-            vm.onPatternClick("4-4-6")
-            assertEquals(BreatheEvent.OpenSession("CALM", "4-4-6"), awaitItem())
-            cancelAndIgnoreRemainingEvents()
+    fun `pattern click emits open session and closes the picker`() =
+        runTest {
+            val vm = BreatheViewModel()
+            vm.onGoalClick("CALM")
+            vm.events.test {
+                vm.onPatternClick("4-4-6")
+                assertEquals(BreatheEvent.OpenSession("CALM", "4-4-6"), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+            val content = vm.uiState.value as BreatheUiState.Content
+            assertNull(content.selectedGoal)
         }
-        val content = vm.uiState.value as BreatheUiState.Content
-        assertNull(content.selectedGoal)
-    }
 
     @Test
-    fun `pattern click without a selected goal is ignored`() = runTest {
-        val vm = BreatheViewModel()
-        vm.events.test {
-            vm.onPatternClick("4-4-6")
-            expectNoEvents()
+    fun `pattern click without a selected goal is ignored`() =
+        runTest {
+            val vm = BreatheViewModel()
+            vm.events.test {
+                vm.onPatternClick("4-4-6")
+                expectNoEvents()
+            }
         }
-    }
 }

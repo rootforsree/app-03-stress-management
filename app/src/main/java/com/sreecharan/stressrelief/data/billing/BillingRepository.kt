@@ -65,12 +65,16 @@ data class BillingPlan(
  * Result of a purchase attempt.
  */
 sealed interface PurchaseResult {
-    data class Success(val transaction: StoreTransaction) : PurchaseResult
+    data class Success(
+        val transaction: StoreTransaction,
+    ) : PurchaseResult
 
     /** The user backed out of the Google Play sheet. Not an error. */
     data object Cancelled : PurchaseResult
 
-    data class Failed(val message: String) : PurchaseResult
+    data class Failed(
+        val message: String,
+    ) : PurchaseResult
 }
 
 interface BillingRepository {
@@ -92,7 +96,10 @@ interface BillingRepository {
      * an Activity context. Returns [PurchaseResult.Cancelled] when the user
      * dismisses the sheet; that is normal, not an error.
      */
-    suspend fun purchase(activity: Activity, plan: BillingPlan): PurchaseResult
+    suspend fun purchase(
+        activity: Activity,
+        plan: BillingPlan,
+    ): PurchaseResult
 
     /**
      * Restores purchases from the Play account (reinstalls, device switches).

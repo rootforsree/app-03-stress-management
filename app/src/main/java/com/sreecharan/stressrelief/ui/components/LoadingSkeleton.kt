@@ -31,10 +31,11 @@ fun LoadingSkeleton(
     val alpha by transition.animateFloat(
         initialValue = 0.35f,
         targetValue = 0.7f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 900),
-            repeatMode = RepeatMode.Reverse,
-        ),
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = 900),
+                repeatMode = RepeatMode.Reverse,
+            ),
         label = "shimmer",
     )
     val base = MaterialTheme.colorScheme.surfaceVariant

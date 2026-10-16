@@ -24,24 +24,28 @@ sealed interface AppThemeUiState {
 }
 
 @HiltViewModel
-class AppThemeViewModel @Inject constructor(
-    private val settingsRepository: SettingsRepository,
-) : ViewModel() {
-    val uiState: StateFlow<AppThemeUiState> = combine(
-        settingsRepository.themeMode,
-        settingsRepository.dynamicColor,
-    ) { mode, dynamic ->
-        AppThemeUiState.Ready(themeMode = mode, dynamicColor = dynamic)
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = AppThemeUiState.Loading,
-    )
+class AppThemeViewModel
+    @Inject
+    constructor(
+        private val settingsRepository: SettingsRepository,
+    ) : ViewModel() {
+        val uiState: StateFlow<AppThemeUiState> =
+            combine(
+                settingsRepository.themeMode,
+                settingsRepository.dynamicColor,
+            ) { mode, dynamic ->
+                AppThemeUiState.Ready(themeMode = mode, dynamicColor = dynamic)
+            }.stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = AppThemeUiState.Loading,
+            )
 
-    val onboardingCompleted: StateFlow<Boolean> = settingsRepository.onboardingCompleted
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = false,
-        )
-}
+        val onboardingCompleted: StateFlow<Boolean> =
+            settingsRepository.onboardingCompleted
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(5_000),
+                    initialValue = false,
+                )
+    }

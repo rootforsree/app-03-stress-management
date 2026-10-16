@@ -62,21 +62,22 @@ class SleepSoundEngine
             if (minFrames <= 0) return
             val track =
                 try {
-                    AudioTrack.Builder()
+                    AudioTrack
+                        .Builder()
                         .setAudioAttributes(
-                            AudioAttributes.Builder()
+                            AudioAttributes
+                                .Builder()
                                 .setUsage(AudioAttributes.USAGE_MEDIA)
                                 .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                                 .build(),
-                        )
-                        .setAudioFormat(
-                            AudioFormat.Builder()
+                        ).setAudioFormat(
+                            AudioFormat
+                                .Builder()
                                 .setSampleRate(SAMPLE_RATE)
                                 .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
                                 .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                                 .build(),
-                        )
-                        .setBufferSizeInFrames(minFrames * 2)
+                        ).setBufferSizeInBytes(minFrames * 2)
                         .setTransferMode(AudioTrack.MODE_STREAM)
                         .build()
                 } catch (_: Exception) {
@@ -123,7 +124,10 @@ class SleepSoundEngine
 
         fun isRunning(): Boolean = running
 
-        private fun renderLoop(track: AudioTrack, state: SynthMath.SynthState) {
+        private fun renderLoop(
+            track: AudioTrack,
+            state: SynthMath.SynthState,
+        ) {
             val buffer = ShortArray(CHUNK_FRAMES)
             val fadeStepUp = 1f / (SAMPLE_RATE * FADE_IN_MS / 1000f / CHUNK_FRAMES)
             // Fade-out step is recomputed per chunk from the remaining gain so

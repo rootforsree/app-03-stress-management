@@ -12,14 +12,13 @@ import kotlinx.coroutines.test.runTest
  * viewModelScope and an injected @IoDispatcher both advance with advanceUntilIdle().
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-fun runViewModelTest(
-    block: suspend TestScope.(dispatcher: CoroutineDispatcher) -> Unit,
-) = runTest {
-    val dispatcher = StandardTestDispatcher(testScheduler)
-    Dispatchers.setMain(dispatcher)
-    try {
-        block(dispatcher)
-    } finally {
-        Dispatchers.resetMain()
+fun runViewModelTest(block: suspend TestScope.(dispatcher: CoroutineDispatcher) -> Unit) =
+    runTest {
+        val dispatcher = StandardTestDispatcher(testScheduler)
+        Dispatchers.setMain(dispatcher)
+        try {
+            block(dispatcher)
+        } finally {
+            Dispatchers.resetMain()
+        }
     }
-}

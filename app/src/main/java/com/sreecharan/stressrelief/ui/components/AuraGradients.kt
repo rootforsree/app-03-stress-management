@@ -44,8 +44,7 @@ object AuraGradients {
     /** Sweep gradient for progress rings. Same stops as the hero gradient. */
     @Composable
     @ReadOnlyComposable
-    fun sweep(): Brush =
-        Brush.sweepGradient(AuroraBrushes.heroStops(LocalAuroraDark.current))
+    fun sweep(): Brush = Brush.sweepGradient(AuroraBrushes.heroStops(LocalAuroraDark.current))
 
     /**
      * Faint background wash. Alpha stays in the 0.12-0.18 band per the design doc
@@ -53,8 +52,7 @@ object AuraGradients {
      */
     @Composable
     @ReadOnlyComposable
-    fun calmWash(alpha: Float = 0.15f): Brush =
-        AuroraBrushes.calmWash(LocalAuroraDark.current, alpha)
+    fun calmWash(alpha: Float = 0.15f): Brush = AuroraBrushes.calmWash(LocalAuroraDark.current, alpha)
 
     /** Vertical fade used behind chart area fills. */
     @Composable

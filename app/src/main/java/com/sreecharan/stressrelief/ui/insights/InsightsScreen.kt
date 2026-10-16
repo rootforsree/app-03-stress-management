@@ -51,7 +51,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sreecharan.stressrelief.R
 import com.sreecharan.stressrelief.navigation.PaywallRoute
@@ -110,16 +110,20 @@ private fun InsightsContent(
         ) {
             Box(Modifier.fillMaxSize().background(AuraGradients.calmWash()))
             when (state) {
-                InsightsUiState.Loading ->
+                InsightsUiState.Loading -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
                             stringResource(R.string.insights_loading),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                is InsightsUiState.Error ->
+                }
+
+                is InsightsUiState.Error -> {
                     InsightsError(message = state.message, onRetry = onRetry)
-                is InsightsUiState.Content ->
+                }
+
+                is InsightsUiState.Content -> {
                     ProGate(
                         onShowPaywall = { onNavigate(PaywallRoute) },
                         lockedTitle = stringResource(R.string.insights_upsell_title),
@@ -127,13 +131,17 @@ private fun InsightsContent(
                     ) {
                         InsightsDashboard(state = state)
                     }
+                }
             }
         }
     }
 }
 
 @Composable
-private fun InsightsDashboard(state: InsightsUiState.Content, modifier: Modifier = Modifier) {
+private fun InsightsDashboard(
+    state: InsightsUiState.Content,
+    modifier: Modifier = Modifier,
+) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 24.dp),
@@ -229,7 +237,10 @@ private fun deltaText(delta: Double?): String =
     }
 
 @Composable
-private fun MoodTrendChart(trend: List<DailyMood?>, modifier: Modifier = Modifier) {
+private fun MoodTrendChart(
+    trend: List<DailyMood?>,
+    modifier: Modifier = Modifier,
+) {
     val lineBrush = AuraGradients.dawn()
     val fillBrush = AuraGradients.verticalFade()
     val dotColor = MaterialTheme.colorScheme.primary
@@ -241,10 +252,10 @@ private fun MoodTrendChart(trend: List<DailyMood?>, modifier: Modifier = Modifie
         val padY = 12.dp.toPx()
         val plotW = width - padX * 2
         val plotH = height - padY * 2
-        fun x(i: Int): Float =
-            if (trend.size <= 1) padX else padX + plotW * i / (trend.size - 1)
-        fun y(avg: Double): Float =
-            (padY + plotH * (1 - ((avg - 1) / 4.0).toFloat().coerceIn(0f, 1f)))
+
+        fun x(i: Int): Float = if (trend.size <= 1) padX else padX + plotW * i / (trend.size - 1)
+
+        fun y(avg: Double): Float = (padY + plotH * (1 - ((avg - 1) / 4.0).toFloat().coerceIn(0f, 1f)))
 
         // Faint gridlines for moods 1..5.
         (1..5).forEach { mood ->
@@ -297,7 +308,10 @@ private fun MoodTrendChart(trend: List<DailyMood?>, modifier: Modifier = Modifie
 
 /** Year-in-Pixels month grid: one rounded cell per day, colored by average mood. */
 @Composable
-private fun PixelsCard(cells: List<MonthCell>, modifier: Modifier = Modifier) {
+private fun PixelsCard(
+    cells: List<MonthCell>,
+    modifier: Modifier = Modifier,
+) {
     val context = LocalContext.current
     val weekdayLabels =
         remember { context.resources.getStringArray(R.array.insights_weekday_labels).toList() }
@@ -361,7 +375,10 @@ private fun PixelsCard(cells: List<MonthCell>, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun CorrelationCards(state: InsightsUiState.Content, modifier: Modifier = Modifier) {
+private fun CorrelationCards(
+    state: InsightsUiState.Content,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
         ActivitiesCard(activities = state.topActivities)
         SleepCard(sleep = state.sleep)
@@ -369,11 +386,13 @@ private fun CorrelationCards(state: InsightsUiState.Content, modifier: Modifier 
     }
 }
 
-private fun displayTag(tag: String): String =
-    tag.replaceFirstChar { it.uppercaseChar() }
+private fun displayTag(tag: String): String = tag.replaceFirstChar { it.uppercaseChar() }
 
 @Composable
-private fun ActivitiesCard(activities: List<ActivityMood>, modifier: Modifier = Modifier) {
+private fun ActivitiesCard(
+    activities: List<ActivityMood>,
+    modifier: Modifier = Modifier,
+) {
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(22.dp),
@@ -434,7 +453,10 @@ private fun ActivitiesCard(activities: List<ActivityMood>, modifier: Modifier = 
 }
 
 @Composable
-private fun SleepCard(sleep: SleepMoodInsight, modifier: Modifier = Modifier) {
+private fun SleepCard(
+    sleep: SleepMoodInsight,
+    modifier: Modifier = Modifier,
+) {
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(22.dp),
@@ -488,7 +510,10 @@ private fun SleepCard(sleep: SleepMoodInsight, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ConsistencyCard(pct: Int, modifier: Modifier = Modifier) {
+private fun ConsistencyCard(
+    pct: Int,
+    modifier: Modifier = Modifier,
+) {
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(22.dp),

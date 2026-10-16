@@ -36,7 +36,8 @@ class SynthMathTest {
         ids.forEach { id ->
             val state = SynthMath.SynthState(seed = 42L)
             var energy = 0f
-            repeat(SynthMath.SAMPLE_RATE) { // one full second
+            repeat(SynthMath.SAMPLE_RATE) {
+                // one full second
                 val s = SynthMath.mixSample(state, mapOf(id to 1f))
                 assertTrue(s.isFinite(), "layer $id produced non-finite sample")
                 assertTrue(abs(s) <= 1f, "layer $id exceeded [-1, 1]: $s")
@@ -77,7 +78,10 @@ class SynthMathTest {
         assertTrue(first != second, "different seeds should not produce identical noise")
     }
 
-    private fun render(samples: Int, seed: Long): List<Float> {
+    private fun render(
+        samples: Int,
+        seed: Long,
+    ): List<Float> {
         val state = SynthMath.SynthState(seed = seed)
         val mix = mapOf(SynthMath.Layer.RAIN to 0.8f, SynthMath.Layer.BROWN to 0.5f)
         return List(samples) { SynthMath.mixSample(state, mix) }

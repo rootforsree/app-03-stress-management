@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,11 +38,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sreecharan.stressrelief.R
-import com.sreecharan.stressrelief.ui.components.AuraButton
 import com.sreecharan.stressrelief.ui.components.AuraGradients
+import com.sreecharan.stressrelief.ui.components.AuroraButton
 
 /**
  * Journal editor route. New entries (entryId = -1) show a rotating guided prompt
@@ -126,6 +127,7 @@ private fun JournalEditorContent(
                 -> {
                     // Kept simple: the editor chrome stays up while saving.
                 }
+
                 is JournalEditorUiState.Error -> {
                     Text(
                         state.message,
@@ -133,6 +135,7 @@ private fun JournalEditorContent(
                         modifier = Modifier.padding(24.dp),
                     )
                 }
+
                 is JournalEditorUiState.Editing -> {
                     Column(
                         Modifier
@@ -176,7 +179,7 @@ private fun JournalEditorContent(
                                 }
                                 Spacer(Modifier.height(6.dp))
                                 Text(
-                                    editing.prompt,
+                                    state.prompt,
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.SemiBold,
                                     color = MaterialTheme.colorScheme.onSurface,
@@ -185,7 +188,7 @@ private fun JournalEditorContent(
                         }
                         Spacer(Modifier.height(12.dp))
                         TextField(
-                            value = editing.text,
+                            value = state.text,
                             onValueChange = onTextChanged,
                             placeholder = {
                                 Text(stringResource(R.string.journal_editor_placeholder))
@@ -211,7 +214,7 @@ private fun JournalEditorContent(
                             text = stringResource(R.string.b4_action_save),
                             onClick = onSave,
                             gradient = true,
-                            enabled = editing.canSave && state !is JournalEditorUiState.Saving,
+                            enabled = state.canSave && state !is JournalEditorUiState.Saving,
                             modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
                         )
                         Spacer(Modifier.height(8.dp))

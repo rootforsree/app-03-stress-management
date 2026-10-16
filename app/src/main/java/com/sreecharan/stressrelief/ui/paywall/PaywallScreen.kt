@@ -109,7 +109,8 @@ private fun PaywallScreenContent(
                 }
             }
         }
-        is PaywallUiState.Content ->
+
+        is PaywallUiState.Content -> {
             PaywallContentBody(
                 content = state,
                 onPlanSelected = onPlanSelected,
@@ -119,6 +120,7 @@ private fun PaywallScreenContent(
                 onErrorDismissed = onErrorDismissed,
                 onClose = onClose,
             )
+        }
     }
 }
 
@@ -192,6 +194,7 @@ private fun PaywallContentBody(
                 content.billingUnavailable -> {
                     PaywallUnavailable(onBack = onClose)
                 }
+
                 content.plans == null -> {
                     Box(
                         modifier = Modifier.fillMaxSize(),
@@ -210,6 +213,7 @@ private fun PaywallContentBody(
                         }
                     }
                 }
+
                 else -> {
                     PaywallPlans(
                         state = content,

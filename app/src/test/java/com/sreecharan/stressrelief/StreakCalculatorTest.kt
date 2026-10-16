@@ -9,13 +9,15 @@ import kotlin.test.assertEquals
 class StreakCalculatorTest {
     private val today = 20_000L
 
-    private fun day(offset: Long, active: Boolean = true) =
-        DailyActivity(
-            dateEpochDay = today - offset,
-            checkInDone = active,
-            breathingMinutes = if (active) 5 else 0,
-            journalDone = false,
-        )
+    private fun day(
+        offset: Long,
+        active: Boolean = true,
+    ) = DailyActivity(
+        dateEpochDay = today - offset,
+        checkInDone = active,
+        breathingMinutes = if (active) 5 else 0,
+        journalDone = false,
+    )
 
     @Test
     fun `consecutive active days count`() {

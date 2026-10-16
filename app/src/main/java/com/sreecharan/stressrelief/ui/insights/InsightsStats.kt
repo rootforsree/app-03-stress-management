@@ -39,8 +39,14 @@ data class MonthCell(
 object InsightsStats {
     const val TREND_DAYS = 30
 
-    private fun dateOf(timestampMs: Long, zone: ZoneId): LocalDate =
-        java.time.Instant.ofEpochMilli(timestampMs).atZone(zone).toLocalDate()
+    private fun dateOf(
+        timestampMs: Long,
+        zone: ZoneId,
+    ): LocalDate =
+        java.time.Instant
+            .ofEpochMilli(timestampMs)
+            .atZone(zone)
+            .toLocalDate()
 
     /** Average mood per day for the last [days] days, oldest first. Null = no check-in. */
     fun dailySeries(

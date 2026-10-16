@@ -41,7 +41,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sreecharan.stressrelief.R
 import com.sreecharan.stressrelief.ui.components.StaggerIn
@@ -81,11 +81,13 @@ private fun BreatheScreenContent(
     onPickerDismiss: () -> Unit,
 ) {
     when (state) {
-        BreatheUiState.Loading -> Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator()
+        BreatheUiState.Loading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
         }
 
         is BreatheUiState.Content -> {
@@ -129,12 +131,13 @@ private fun BreatheScreenContent(
     }
 }
 
-private fun goalGradient(theme: GoalTheme): Brush = when (theme) {
-    GoalTheme.CALM -> Brush.linearGradient(listOf(DawnTeal, DawnCyan))
-    GoalTheme.SLEEP -> Brush.linearGradient(listOf(Color(0xFF6366F1), DawnViolet))
-    GoalTheme.FOCUS -> Brush.linearGradient(listOf(DawnViolet, DawnPink))
-    GoalTheme.SOS -> Brush.linearGradient(listOf(Color(0xFF0D9488), DawnViolet))
-}
+private fun goalGradient(theme: GoalTheme): Brush =
+    when (theme) {
+        GoalTheme.CALM -> Brush.linearGradient(listOf(DawnTeal, DawnCyan))
+        GoalTheme.SLEEP -> Brush.linearGradient(listOf(Color(0xFF6366F1), DawnViolet))
+        GoalTheme.FOCUS -> Brush.linearGradient(listOf(DawnViolet, DawnPink))
+        GoalTheme.SOS -> Brush.linearGradient(listOf(Color(0xFF0D9488), DawnViolet))
+    }
 
 @Composable
 private fun GoalCard(
@@ -146,17 +149,19 @@ private fun GoalCard(
         Card(
             onClick = onClick,
             shape = AuroraShapeTokens.hero,
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            ),
+            colors =
+                CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                ),
             modifier = Modifier.fillMaxWidth(),
         ) {
             Column {
                 Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(104.dp)
-                        .background(goalGradient(goal.theme)),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .height(104.dp)
+                            .background(goalGradient(goal.theme)),
                     contentAlignment = Alignment.Center,
                 ) {
                     val darkTheme = LocalAuroraDark.current
@@ -200,12 +205,12 @@ private fun GoalCard(
 @Composable
 private fun PatternChip(name: String) {
     Box(
-        modifier = Modifier
-            .background(
-                MaterialTheme.colorScheme.primaryContainer,
-                AuroraShapeTokens.chip,
-            )
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+        modifier =
+            Modifier
+                .background(
+                    MaterialTheme.colorScheme.primaryContainer,
+                    AuroraShapeTokens.chip,
+                ).padding(horizontal = 10.dp, vertical = 6.dp),
     ) {
         Text(
             text = name,
@@ -219,11 +224,12 @@ private fun PatternChip(name: String) {
 
 @Composable
 private fun timingSummary(pattern: PatternUi): String {
-    val timing = if (pattern.holdSec > 0) {
-        stringResource(R.string.breathe_pattern_timing_full, pattern.inhaleSec, pattern.holdSec, pattern.exhaleSec)
-    } else {
-        stringResource(R.string.breathe_pattern_timing_no_hold, pattern.inhaleSec, pattern.exhaleSec)
-    }
+    val timing =
+        if (pattern.holdSec > 0) {
+            stringResource(R.string.breathe_pattern_timing_full, pattern.inhaleSec, pattern.holdSec, pattern.exhaleSec)
+        } else {
+            stringResource(R.string.breathe_pattern_timing_no_hold, pattern.inhaleSec, pattern.exhaleSec)
+        }
     return timing + " · " + stringResource(R.string.breathe_pattern_rounds, pattern.rounds)
 }
 

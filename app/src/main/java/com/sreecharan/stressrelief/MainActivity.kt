@@ -9,7 +9,8 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.core.net.toUri
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -32,7 +33,6 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
     @Inject lateinit var paywallLaunchContext: PaywallLaunchContext
 
     private var navControllerRef: NavHostController? = null
@@ -46,14 +46,20 @@ class MainActivity : ComponentActivity() {
             val onboardingCompleted by themeViewModel.onboardingCompleted.collectAsStateWithLifecycle()
             val systemDark = isSystemInDarkTheme()
 
-            val darkTheme = when (val state = themeState) {
-                is AppThemeUiState.Ready -> when (state.themeMode) {
-                    ThemeMode.LIGHT -> false
-                    ThemeMode.DARK -> true
-                    ThemeMode.SYSTEM -> systemDark
+            val darkTheme =
+                when (val state = themeState) {
+                    is AppThemeUiState.Ready -> {
+                        when (state.themeMode) {
+                            ThemeMode.LIGHT -> false
+                            ThemeMode.DARK -> true
+                            ThemeMode.SYSTEM -> systemDark
+                        }
+                    }
+
+                    AppThemeUiState.Loading -> {
+                        systemDark
+                    }
                 }
-                AppThemeUiState.Loading -> systemDark
-            }
             val dynamicColor = (themeState as? AppThemeUiState.Ready)?.dynamicColor ?: false
 
             AuraTheme(darkTheme = darkTheme, dynamicColor = dynamicColor) {
@@ -65,7 +71,7 @@ class MainActivity : ComponentActivity() {
                         val navController = rememberNavController()
                         LaunchedEffect(navController) {
                             navControllerRef = navController
-                            navController.handleDeepLink(intent)
+                            navController.handleDeepLink(resolveDeepLink(intent))
                         }
                         AppNavHost(
                             navController = navController,
@@ -81,6 +87,20 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        navControllerRef?.handleDeepLink(intent)
+        navControllerRef?.handleDeepLink(resolveDeepLink(intent))
+    }
+
+    /**
+     * The Glance widget cannot put a data URI on its launch intent, so it
+     * passes the deep link as an action-parameter extra ([DeepLinks.EXTRA_DEEP_LINK]).
+     * Rehydrate it into [Intent.data] so NavController deep-link matching works.
+     */
+    private fun resolveDeepLink(intent: Intent): Intent {
+        if (intent.data == null) {
+            intent.getStringExtra(DeepLinks.EXTRA_DEEP_LINK)?.toUri()?.let {
+                intent.data = it
+            }
+        }
+        return intent
     }
 }

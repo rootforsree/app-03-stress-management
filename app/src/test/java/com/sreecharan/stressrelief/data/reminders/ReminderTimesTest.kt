@@ -11,8 +11,12 @@ import kotlin.test.assertTrue
 class ReminderTimesTest {
     private val zone = ZoneId.systemDefault()
 
-    private fun millisFor(hour: Int, minute: Int): Long =
-        LocalDateTime.of(2026, 10, 15, hour, minute)
+    private fun millisFor(
+        hour: Int,
+        minute: Int,
+    ): Long =
+        LocalDateTime
+            .of(2026, 10, 15, hour, minute)
             .atZone(zone)
             .toInstant()
             .toEpochMilli()
@@ -32,7 +36,8 @@ class ReminderTimesTest {
         val trigger = ReminderTimes.nextDailyTrigger(9, 0, now)
 
         val expected =
-            LocalDateTime.of(2026, 10, 16, 9, 0)
+            LocalDateTime
+                .of(2026, 10, 16, 9, 0)
                 .atZone(zone)
                 .toInstant()
                 .toEpochMilli()

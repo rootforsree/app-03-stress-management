@@ -19,7 +19,6 @@ import kotlin.test.assertEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class OnboardingViewModelTest {
-
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var repository: SettingsRepository
     private lateinit var scheduler: AuraReminderScheduler
@@ -67,35 +66,38 @@ class OnboardingViewModelTest {
     }
 
     @Test
-    fun `next on the last page persists completion and navigates home`() = runTest(testDispatcher) {
-        viewModel.onNext() // page 1
-        viewModel.onNext() // page 2 (last)
-        viewModel.onNext() // finish
-        advanceUntilIdle()
+    fun `next on the last page persists completion and navigates home`() =
+        runTest(testDispatcher) {
+            viewModel.onNext() // page 1
+            viewModel.onNext() // page 2 (last)
+            viewModel.onNext() // finish
+            advanceUntilIdle()
 
-        coVerify(exactly = 1) { repository.setOnboardingCompleted() }
-        coVerify(exactly = 1) { scheduler.scheduleAll() }
-        assertEquals(OnboardingEvent.NavigateHome, viewModel.events.first())
-    }
-
-    @Test
-    fun `skip persists completion just like the complete path`() = runTest(testDispatcher) {
-        // Regression test for the app-02 bug: the skip path must persist too.
-        viewModel.onSkip()
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { repository.setOnboardingCompleted() }
-        coVerify(exactly = 1) { scheduler.scheduleAll() }
-        assertEquals(OnboardingEvent.NavigateHome, viewModel.events.first())
-    }
+            coVerify(exactly = 1) { repository.setOnboardingCompleted() }
+            coVerify(exactly = 1) { scheduler.scheduleAll() }
+            assertEquals(OnboardingEvent.NavigateHome, viewModel.events.first())
+        }
 
     @Test
-    fun `finish persists the reminders opt-in choice`() = runTest(testDispatcher) {
-        viewModel.onRemindersOptInChanged(false)
-        viewModel.onSkip()
-        advanceUntilIdle()
+    fun `skip persists completion just like the complete path`() =
+        runTest(testDispatcher) {
+            // Regression test for the app-02 bug: the skip path must persist too.
+            viewModel.onSkip()
+            advanceUntilIdle()
 
-        coVerify(exactly = 1) { repository.setRemindersEnabled(false) }
-        coVerify(exactly = 1) { scheduler.scheduleAll() }
-    }
+            coVerify(exactly = 1) { repository.setOnboardingCompleted() }
+            coVerify(exactly = 1) { scheduler.scheduleAll() }
+            assertEquals(OnboardingEvent.NavigateHome, viewModel.events.first())
+        }
+
+    @Test
+    fun `finish persists the reminders opt-in choice`() =
+        runTest(testDispatcher) {
+            viewModel.onRemindersOptInChanged(false)
+            viewModel.onSkip()
+            advanceUntilIdle()
+
+            coVerify(exactly = 1) { repository.setRemindersEnabled(false) }
+            coVerify(exactly = 1) { scheduler.scheduleAll() }
+        }
 }

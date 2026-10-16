@@ -2,10 +2,8 @@ package com.sreecharan.stressrelief.data.health
 
 import android.content.Context
 import androidx.activity.result.contract.ActivityResultContract
-import androidx.health.connect.client.AggregateRequest
-import androidx.health.connect.client.HealthConnectClient as AndroidHealthConnectClient
-import androidx.health.connect.client.HealthPermission
 import androidx.health.connect.client.PermissionController
+import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.RestingHeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
@@ -14,6 +12,7 @@ import com.sreecharan.stressrelief.data.model.StressSignals
 import java.time.Duration
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import androidx.health.connect.client.HealthConnectClient as AndroidHealthConnectClient
 
 /**
  * Health Connect access for stress signals: average resting heart rate and
@@ -22,7 +21,9 @@ import java.time.temporal.ChronoUnit
  * Every read degrades to nulls on any failure (SDK missing, permissions
  * denied, read error). This class never throws.
  */
-class HealthConnectClient(private val context: Context) : HealthConnectStateProvider {
+class HealthConnectClient(
+    private val context: Context,
+) : HealthConnectStateProvider {
     private val readPermissions: Set<String> =
         setOf(
             HealthPermission.getReadPermission(RestingHeartRateRecord::class),

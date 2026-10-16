@@ -14,7 +14,10 @@ interface MoodCheckInDao {
         "SELECT * FROM mood_checkins WHERE timestampMs >= :dayStartMs AND timestampMs < :dayEndMs " +
             "ORDER BY timestampMs DESC",
     )
-    fun observeForDay(dayStartMs: Long, dayEndMs: Long): Flow<List<MoodCheckInEntity>>
+    fun observeForDay(
+        dayStartMs: Long,
+        dayEndMs: Long,
+    ): Flow<List<MoodCheckInEntity>>
 
     /**
      * Bounded history read: only rows at/after [sinceMs]. Callers must pass a

@@ -5,9 +5,9 @@ import com.sreecharan.stressrelief.data.catalog.journalPrompts
 import com.sreecharan.stressrelief.data.model.JournalEntry
 import com.sreecharan.stressrelief.ui.FakeWellnessRepository
 import com.sreecharan.stressrelief.ui.runViewModelTest
-import java.time.LocalDate
 import kotlinx.coroutines.test.advanceUntilIdle
 import org.junit.jupiter.api.Test
+import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -109,7 +109,12 @@ class JournalViewModelsTest {
             assertTrue(vm.uiState.value is JournalEditorUiState.Saved)
             assertTrue(repo.journalDoneMarked)
             assertEquals(1, repo.journalEntriesFlow.value.size)
-            assertEquals("Today was a lot.", repo.journalEntriesFlow.value.first().text)
+            assertEquals(
+                "Today was a lot.",
+                repo.journalEntriesFlow.value
+                    .first()
+                    .text,
+            )
         }
 
     @Test

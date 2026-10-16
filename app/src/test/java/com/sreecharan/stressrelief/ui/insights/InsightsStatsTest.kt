@@ -2,10 +2,10 @@ package com.sreecharan.stressrelief.ui.insights
 
 import com.sreecharan.stressrelief.data.model.MoodCheckIn
 import com.sreecharan.stressrelief.data.model.SleepSession
+import org.junit.jupiter.api.Test
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZoneId
-import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -63,10 +63,11 @@ class InsightsStatsTest {
     @Test
     fun `trend delta is positive when recent mood climbs`() {
         val series =
-            (0 until 10).map { back ->
-                val score = if (back < 5) 4 else 2
-                DailyMood(today.minusDays(back.toLong()), score.toDouble())
-            }.reversed()
+            (0 until 10)
+                .map { back ->
+                    val score = if (back < 5) 4 else 2
+                    DailyMood(today.minusDays(back.toLong()), score.toDouble())
+                }.reversed()
         val delta = InsightsStats.trendDelta(series)
         assertNotNull(delta)
         assertTrue(delta > 0, "recent 4s beat older 2s")

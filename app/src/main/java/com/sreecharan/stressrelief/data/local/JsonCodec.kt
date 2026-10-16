@@ -11,8 +11,7 @@ import kotlinx.serialization.json.Json
 internal object JsonCodec {
     private val json = Json { encodeDefaults = true }
 
-    fun encodeStrings(values: List<String>): String =
-        json.encodeToString(ListSerializer(String.serializer()), values)
+    fun encodeStrings(values: List<String>): String = json.encodeToString(ListSerializer(String.serializer()), values)
 
     fun decodeStrings(raw: String): List<String> =
         runCatching {
@@ -23,8 +22,7 @@ internal object JsonCodec {
             }
         }.getOrDefault(emptyList())
 
-    fun encodeInts(values: List<Int>): String =
-        json.encodeToString(ListSerializer(Int.serializer()), values)
+    fun encodeInts(values: List<Int>): String = json.encodeToString(ListSerializer(Int.serializer()), values)
 
     fun decodeInts(raw: String): List<Int> =
         runCatching {

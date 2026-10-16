@@ -105,7 +105,10 @@ class BillingRepositoryImpl
             }
         }
 
-        override suspend fun purchase(activity: Activity, plan: BillingPlan): PurchaseResult {
+        override suspend fun purchase(
+            activity: Activity,
+            plan: BillingPlan,
+        ): PurchaseResult {
             if (!isConfigured) return PurchaseResult.Failed("Billing is not configured.")
             val rcPackage =
                 packagesById[plan.packageId]
@@ -123,7 +126,10 @@ class BillingRepositoryImpl
                             if (cont.isActive) cont.resume(PurchaseResult.Success(storeTransaction))
                         }
 
-                        override fun onError(error: PurchasesError, userCancelled: Boolean) {
+                        override fun onError(
+                            error: PurchasesError,
+                            userCancelled: Boolean,
+                        ) {
                             if (cont.isActive) {
                                 cont.resume(
                                     if (userCancelled) {

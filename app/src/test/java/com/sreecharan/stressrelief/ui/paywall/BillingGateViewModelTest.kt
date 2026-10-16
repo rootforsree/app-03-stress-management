@@ -22,9 +22,14 @@ private class FakeBillingRepository : BillingRepository {
     val entitlementState = MutableStateFlow<EntitlementState>(EntitlementState.Loading)
     override val entitlement: StateFlow<EntitlementState> = entitlementState
     override val plans: StateFlow<List<BillingPlan>?> = MutableStateFlow(null)
+
     override suspend fun refresh() = Unit
-    override suspend fun purchase(activity: Activity, plan: BillingPlan): PurchaseResult =
-        PurchaseResult.Cancelled
+
+    override suspend fun purchase(
+        activity: Activity,
+        plan: BillingPlan,
+    ): PurchaseResult = PurchaseResult.Cancelled
+
     override suspend fun restore(): Boolean = false
 }
 

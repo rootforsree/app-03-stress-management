@@ -39,8 +39,10 @@ private class FakeBillingRepository : BillingRepository {
         refreshCalls++
     }
 
-    override suspend fun purchase(activity: Activity, plan: BillingPlan): PurchaseResult =
-        purchaseResult
+    override suspend fun purchase(
+        activity: Activity,
+        plan: BillingPlan,
+    ): PurchaseResult = purchaseResult
 
     override suspend fun restore(): Boolean = restoreResult
 }
@@ -105,7 +107,12 @@ class PaywallViewModelTest {
             billing.plansState.value = listOf(monthlyPlan(), lifetimePlan(), annualPlan())
             testDispatcher.scheduler.runCurrent()
 
-            assertEquals("\$rc_annual", viewModel.uiState.value.content().selectedPlanId)
+            assertEquals(
+                "\$rc_annual",
+                viewModel.uiState.value
+                    .content()
+                    .selectedPlanId,
+            )
         }
 
     @Test
@@ -115,7 +122,12 @@ class PaywallViewModelTest {
             billing.plansState.value = listOf(monthlyPlan(), lifetimePlan())
             testDispatcher.scheduler.runCurrent()
 
-            assertEquals("\$rc_lifetime", viewModel.uiState.value.content().selectedPlanId)
+            assertEquals(
+                "\$rc_lifetime",
+                viewModel.uiState.value
+                    .content()
+                    .selectedPlanId,
+            )
         }
 
     @Test
@@ -127,8 +139,17 @@ class PaywallViewModelTest {
 
             viewModel.onPlanSelected("\$rc_monthly")
 
-            assertEquals("\$rc_monthly", viewModel.uiState.value.content().selectedPlanId)
-            assertNull(viewModel.uiState.value.content().errorMessage)
+            assertEquals(
+                "\$rc_monthly",
+                viewModel.uiState.value
+                    .content()
+                    .selectedPlanId,
+            )
+            assertNull(
+                viewModel.uiState.value
+                    .content()
+                    .errorMessage,
+            )
         }
 
     @Test
@@ -147,7 +168,11 @@ class PaywallViewModelTest {
                 testDispatcher.scheduler.runCurrent()
                 // Success clears the spinner; the entitlement listener is the
                 // single Dismiss sender, so no event arrives here.
-                assertFalse(viewModel.uiState.value.content().isPurchasing)
+                assertFalse(
+                    viewModel.uiState.value
+                        .content()
+                        .isPurchasing,
+                )
                 expectNoEvents()
                 cancelAndConsumeRemainingEvents()
             }
@@ -164,8 +189,16 @@ class PaywallViewModelTest {
             viewModel.onPurchaseClicked(mockk<Activity>())
             testDispatcher.scheduler.runCurrent()
 
-            assertFalse(viewModel.uiState.value.content().isPurchasing)
-            assertNull(viewModel.uiState.value.content().errorMessage)
+            assertFalse(
+                viewModel.uiState.value
+                    .content()
+                    .isPurchasing,
+            )
+            assertNull(
+                viewModel.uiState.value
+                    .content()
+                    .errorMessage,
+            )
         }
 
     @Test
@@ -179,8 +212,17 @@ class PaywallViewModelTest {
             viewModel.onPurchaseClicked(mockk<Activity>())
             testDispatcher.scheduler.runCurrent()
 
-            assertEquals("Network error", viewModel.uiState.value.content().errorMessage)
-            assertFalse(viewModel.uiState.value.content().isPurchasing)
+            assertEquals(
+                "Network error",
+                viewModel.uiState.value
+                    .content()
+                    .errorMessage,
+            )
+            assertFalse(
+                viewModel.uiState.value
+                    .content()
+                    .isPurchasing,
+            )
         }
 
     @Test
@@ -194,9 +236,15 @@ class PaywallViewModelTest {
 
             assertEquals(
                 R.string.paywall_restore_none,
-                viewModel.uiState.value.content().restoreMessageRes,
+                viewModel.uiState.value
+                    .content()
+                    .restoreMessageRes,
             )
-            assertFalse(viewModel.uiState.value.content().isRestoring)
+            assertFalse(
+                viewModel.uiState.value
+                    .content()
+                    .isRestoring,
+            )
         }
 
     @Test
@@ -206,7 +254,11 @@ class PaywallViewModelTest {
             billing.entitlementState.value = EntitlementState.Unavailable
             testDispatcher.scheduler.runCurrent()
 
-            assertTrue(viewModel.uiState.value.content().billingUnavailable)
+            assertTrue(
+                viewModel.uiState.value
+                    .content()
+                    .billingUnavailable,
+            )
         }
 
     @Test
@@ -228,7 +280,11 @@ class PaywallViewModelTest {
             val viewModel = PaywallViewModel(billing, launchContext)
             testDispatcher.scheduler.runCurrent()
 
-            assertFalse(viewModel.uiState.value.content().allowClose)
+            assertFalse(
+                viewModel.uiState.value
+                    .content()
+                    .allowClose,
+            )
         }
 
     @Test
@@ -238,7 +294,11 @@ class PaywallViewModelTest {
             val viewModel = PaywallViewModel(billing, launchContext)
             testDispatcher.scheduler.runCurrent()
 
-            assertTrue(viewModel.uiState.value.content().allowClose)
+            assertTrue(
+                viewModel.uiState.value
+                    .content()
+                    .allowClose,
+            )
         }
 
     @Test

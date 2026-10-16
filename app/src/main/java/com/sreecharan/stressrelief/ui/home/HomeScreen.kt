@@ -6,9 +6,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -60,7 +60,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sreecharan.stressrelief.R
 import com.sreecharan.stressrelief.data.model.StressScore
@@ -70,9 +70,9 @@ import com.sreecharan.stressrelief.navigation.JournalEditorRoute
 import com.sreecharan.stressrelief.navigation.MoodCheckInRoute
 import com.sreecharan.stressrelief.navigation.SettingsRoute
 import com.sreecharan.stressrelief.navigation.SleepRoute
-import com.sreecharan.stressrelief.ui.components.AuraButton
 import com.sreecharan.stressrelief.ui.components.AuraGradients
 import com.sreecharan.stressrelief.ui.components.AuraSectionTitle
+import com.sreecharan.stressrelief.ui.components.AuroraButton
 import com.sreecharan.stressrelief.ui.components.StaggerIn
 import com.sreecharan.stressrelief.ui.theme.LocalAuroraDark
 import kotlinx.collections.immutable.ImmutableList
@@ -153,16 +153,22 @@ private fun HomeContent(
                     .background(AuraGradients.calmWash()),
             )
             when (state) {
-                HomeUiState.Loading -> HomeLoading()
-                is HomeUiState.Error ->
+                HomeUiState.Loading -> {
+                    HomeLoading()
+                }
+
+                is HomeUiState.Error -> {
                     HomeError(message = state.message, onRetry = onRetry)
-                is HomeUiState.Content ->
+                }
+
+                is HomeUiState.Content -> {
                     HomeDashboard(
                         state = state,
                         onNavigate = onNavigate,
                         onRefreshScore = onRefreshScore,
                         onConnectHealth = onConnectHealth,
                     )
+                }
             }
         }
     }
@@ -364,7 +370,10 @@ private fun StressHeroCard(
 }
 
 @Composable
-private fun FactorRow(factor: String, modifier: Modifier = Modifier) {
+private fun FactorRow(
+    factor: String,
+    modifier: Modifier = Modifier,
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier.padding(vertical = 3.dp),
@@ -388,7 +397,10 @@ private fun FactorRow(factor: String, modifier: Modifier = Modifier) {
 
 /** 0-100 ring; the progress sweep uses the dawn gradient, never a flat color. */
 @Composable
-private fun StressRing(score: Int, modifier: Modifier = Modifier) {
+private fun StressRing(
+    score: Int,
+    modifier: Modifier = Modifier,
+) {
     val sweep = AuraGradients.sweep()
     val track = MaterialTheme.colorScheme.surfaceVariant
     val cd = stringResource(R.string.home_stress_score_cd, score)
@@ -493,12 +505,14 @@ private fun StreakCard(
                                 Modifier
                                     .size(14.dp)
                                     .clip(CircleShape)
-                                    .background(
+                                    .then(
                                         if (dot.active) {
-                                            AuraGradients.dawn()
+                                            Modifier.background(AuraGradients.dawn())
                                         } else {
-                                            MaterialTheme.colorScheme.onTertiaryContainer
-                                                .copy(alpha = 0.18f)
+                                            Modifier.background(
+                                                MaterialTheme.colorScheme.onTertiaryContainer
+                                                    .copy(alpha = 0.18f),
+                                            )
                                         },
                                     ),
                             )
@@ -524,7 +538,10 @@ private fun StreakCard(
  * the warm accent the design doc reserves for streak highlights.
  */
 @Composable
-private fun BloomVisual(petals: Int, modifier: Modifier = Modifier) {
+private fun BloomVisual(
+    petals: Int,
+    modifier: Modifier = Modifier,
+) {
     val tertiary = MaterialTheme.colorScheme.tertiary
     val onTertiary = MaterialTheme.colorScheme.onTertiary
     val cd = stringResource(R.string.home_bloom_cd, petals)
@@ -750,7 +767,10 @@ private fun TimelineRow(
 
 /** Premium teaser that routes to the gated Insights screen. */
 @Composable
-private fun InsightsPromoCard(onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun InsightsPromoCard(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(22.dp),

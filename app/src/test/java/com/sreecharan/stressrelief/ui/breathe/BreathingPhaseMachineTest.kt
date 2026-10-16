@@ -5,25 +5,26 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
 class BreathingPhaseMachineTest {
-
-    private val calm = BreathingPatternSpec(
-        id = "4-4-6",
-        name = "4-4-6 Calm",
-        inhaleSec = 4,
-        holdSec = 0,
-        exhaleSec = 6,
-        holdAfterSec = 0,
-        rounds = 6,
-    )
-    private val box = BreathingPatternSpec(
-        id = "box",
-        name = "Box",
-        inhaleSec = 4,
-        holdSec = 4,
-        exhaleSec = 4,
-        holdAfterSec = 4,
-        rounds = 6,
-    )
+    private val calm =
+        BreathingPatternSpec(
+            id = "4-4-6",
+            name = "4-4-6 Calm",
+            inhaleSec = 4,
+            holdSec = 0,
+            exhaleSec = 6,
+            holdAfterSec = 0,
+            rounds = 6,
+        )
+    private val box =
+        BreathingPatternSpec(
+            id = "box",
+            name = "Box",
+            inhaleSec = 4,
+            holdSec = 4,
+            exhaleSec = 4,
+            holdAfterSec = 4,
+            rounds = 6,
+        )
 
     @Test
     fun `zero duration phases are skipped`() {

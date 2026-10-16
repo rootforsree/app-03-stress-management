@@ -3,8 +3,8 @@ package com.sreecharan.stressrelief.ui.onboarding
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.sreecharan.stressrelief.di.IoDispatcher
 import com.sreecharan.stressrelief.data.repository.SettingsRepository
+import com.sreecharan.stressrelief.di.IoDispatcher
 import com.sreecharan.stressrelief.notifications.AuraReminderScheduler
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
@@ -12,6 +12,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -41,55 +42,56 @@ sealed interface OnboardingEvent {
  * app-02 bug was a skip path that forgot to persist).
  */
 @HiltViewModel
-class OnboardingViewModel @Inject constructor(
-    private val settingsRepository: SettingsRepository,
-    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
-    private val scheduler: AuraReminderScheduler,
-) : ViewModel() {
+class OnboardingViewModel
+    @Inject
+    constructor(
+        private val settingsRepository: SettingsRepository,
+        @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
+        private val scheduler: AuraReminderScheduler,
+    ) : ViewModel() {
+        private val _uiState = MutableStateFlow(OnboardingUiState.Paging(page = 0))
+        val uiState: StateFlow<OnboardingUiState> = _uiState.asStateFlow()
 
-    val uiState: StateFlow<OnboardingUiState> field =
-        MutableStateFlow(OnboardingUiState.Paging(page = 0))
+        private val _events = Channel<OnboardingEvent>(Channel.BUFFERED)
+        val events: Flow<OnboardingEvent> = _events.receiveAsFlow()
 
-    private val _events = Channel<OnboardingEvent>(Channel.BUFFERED)
-    val events: Flow<OnboardingEvent> = _events.receiveAsFlow()
-
-    fun onPageChanged(page: Int) {
-        field.update { current ->
-            when (current) {
-                is OnboardingUiState.Paging -> current.copy(page = page)
+        fun onPageChanged(page: Int) {
+            _uiState.update { current ->
+                when (current) {
+                    is OnboardingUiState.Paging -> current.copy(page = page)
+                }
             }
         }
-    }
 
-    fun onNext() {
-        val current = field.value as? OnboardingUiState.Paging ?: return
-        if (current.page < current.totalPages - 1) {
-            field.update { OnboardingUiState.Paging(page = current.page + 1) }
-        } else {
+        fun onNext() {
+            val current = _uiState.value as? OnboardingUiState.Paging ?: return
+            if (current.page < current.totalPages - 1) {
+                _uiState.update { OnboardingUiState.Paging(page = current.page + 1) }
+            } else {
+                finishOnboarding()
+            }
+        }
+
+        fun onSkip() {
             finishOnboarding()
         }
-    }
 
-    fun onSkip() {
-        finishOnboarding()
-    }
+        fun onRemindersOptInChanged(optIn: Boolean) {
+            _uiState.update { current ->
+                when (current) {
+                    is OnboardingUiState.Paging -> current.copy(remindersOptIn = optIn)
+                }
+            }
+        }
 
-    fun onRemindersOptInChanged(optIn: Boolean) {
-        field.update { current ->
-            when (current) {
-                is OnboardingUiState.Paging -> current.copy(remindersOptIn = optIn)
+        private fun finishOnboarding() {
+            viewModelScope.launch(ioDispatcher) {
+                val optIn = (_uiState.value as? OnboardingUiState.Paging)?.remindersOptIn ?: true
+                settingsRepository.setRemindersEnabled(optIn)
+                settingsRepository.setOnboardingCompleted()
+                // Arms the reminder alarms (no-op while reminders are disabled).
+                runCatching { scheduler.scheduleAll() }
+                _events.send(OnboardingEvent.NavigateHome)
             }
         }
     }
-
-    private fun finishOnboarding() {
-        viewModelScope.launch(ioDispatcher) {
-            val optIn = (field.value as? OnboardingUiState.Paging)?.remindersOptIn ?: true
-            settingsRepository.setRemindersEnabled(optIn)
-            settingsRepository.setOnboardingCompleted()
-            // Arms the reminder alarms (no-op while reminders are disabled).
-            runCatching { scheduler.scheduleAll() }
-            _events.send(OnboardingEvent.NavigateHome)
-        }
-    }
-}

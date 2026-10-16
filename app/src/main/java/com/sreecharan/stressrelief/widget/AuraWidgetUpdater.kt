@@ -3,8 +3,8 @@ package com.sreecharan.stressrelief.widget
 import android.content.Context
 import androidx.datastore.preferences.core.edit
 import androidx.glance.appwidget.GlanceAppWidgetManager
-import com.sreecharan.stressrelief.di.IoDispatcher
 import com.sreecharan.stressrelief.data.repository.WellnessRepository
+import com.sreecharan.stressrelief.di.IoDispatcher
 import com.sreecharan.stressrelief.widget.AuraWidget.Companion.widgetDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher

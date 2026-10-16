@@ -42,12 +42,13 @@ fun AuroraButton(
             modifier = modifier.background(AuroraBrushes.hero(darkTheme), shape),
             enabled = enabled,
             shape = shape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Transparent,
-                contentColor = contentColor,
-                disabledContainerColor = Color.Transparent,
-                disabledContentColor = contentColor.copy(alpha = 0.5f),
-            ),
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = Color.Transparent,
+                    contentColor = contentColor,
+                    disabledContainerColor = Color.Transparent,
+                    disabledContentColor = contentColor.copy(alpha = 0.5f),
+                ),
             contentPadding = PaddingValues(horizontal = 28.dp, vertical = 16.dp),
         ) {
             leadingIcon?.let {

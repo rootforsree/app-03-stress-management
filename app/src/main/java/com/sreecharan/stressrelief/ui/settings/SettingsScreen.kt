@@ -19,8 +19,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.NightsStay
@@ -54,7 +54,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sreecharan.stressrelief.BuildConfig
 import com.sreecharan.stressrelief.R
@@ -126,7 +126,12 @@ fun SettingsContent(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineMedium) },
+                title = {
+                    Text(
+                        stringResource(R.string.settings_title),
+                        style = MaterialTheme.typography.headlineMedium,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -142,6 +147,7 @@ fun SettingsContent(
             SettingsUiState.Loading -> {
                 LoadingSkeleton(modifier = Modifier.padding(innerPadding).padding(20.dp))
             }
+
             is SettingsUiState.Ready -> {
                 LazyColumn(
                     modifier = Modifier.fillMaxSize().padding(innerPadding),
@@ -299,23 +305,28 @@ fun SettingsContent(
     val ready = state as? SettingsUiState.Ready
     val editing = editingQuietHour
     if (ready != null && editing != null) {
-        val initial = if (editing) {
-            ready.quietHours.startHour to ready.quietHours.startMin
-        } else {
-            ready.quietHours.endHour to ready.quietHours.endMin
-        }
-        val pickerState = rememberTimePickerState(
-            initialHour = initial.first,
-            initialMinute = initial.second,
-            is24Hour = false,
-        )
+        val initial =
+            if (editing) {
+                ready.quietHours.startHour to ready.quietHours.startMin
+            } else {
+                ready.quietHours.endHour to ready.quietHours.endMin
+            }
+        val pickerState =
+            rememberTimePickerState(
+                initialHour = initial.first,
+                initialMinute = initial.second,
+                is24Hour = false,
+            )
         AlertDialog(
             onDismissRequest = { editingQuietHour = null },
             title = {
                 Text(
                     stringResource(
-                        if (editing) R.string.settings_quiet_hours_start_label
-                        else R.string.settings_quiet_hours_end_label,
+                        if (editing) {
+                            R.string.settings_quiet_hours_start_label
+                        } else {
+                            R.string.settings_quiet_hours_end_label
+                        },
                     ),
                 )
             },
@@ -323,11 +334,12 @@ fun SettingsContent(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val updated = if (editing) {
-                            ready.quietHours.copy(startHour = pickerState.hour, startMin = pickerState.minute)
-                        } else {
-                            ready.quietHours.copy(endHour = pickerState.hour, endMin = pickerState.minute)
-                        }
+                        val updated =
+                            if (editing) {
+                                ready.quietHours.copy(startHour = pickerState.hour, startMin = pickerState.minute)
+                            } else {
+                                ready.quietHours.copy(endHour = pickerState.hour, endMin = pickerState.minute)
+                            }
                         onQuietHoursChanged(updated)
                         editingQuietHour = null
                     },
@@ -348,18 +360,20 @@ private fun ThemeModeRow(
     onSelect: () -> Unit,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onSelect)
-            .padding(vertical = 14.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onSelect)
+                .padding(vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
-            imageVector = when (mode) {
-                ThemeMode.SYSTEM -> Icons.Filled.Palette
-                ThemeMode.LIGHT -> Icons.Filled.LightMode
-                ThemeMode.DARK -> Icons.Filled.DarkMode
-            },
+            imageVector =
+                when (mode) {
+                    ThemeMode.SYSTEM -> Icons.Filled.Palette
+                    ThemeMode.LIGHT -> Icons.Filled.LightMode
+                    ThemeMode.DARK -> Icons.Filled.DarkMode
+                },
             contentDescription = null,
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(24.dp),
@@ -417,10 +431,11 @@ private fun SettingsActionRow(
     destructive: Boolean = false,
 ) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(vertical = 14.dp),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
@@ -446,7 +461,10 @@ private fun SettingsActionRow(
 }
 
 @Composable
-private fun SettingsInfoRow(icon: ImageVector, title: String) {
+private fun SettingsInfoRow(
+    icon: ImageVector,
+    title: String,
+) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -463,7 +481,10 @@ private fun SettingsInfoRow(icon: ImageVector, title: String) {
 }
 
 /** Locale-aware short time (e.g. 10:00 PM); never hardcodes AM/PM markers. */
-private fun formatTime(hour: Int, minute: Int): String {
+private fun formatTime(
+    hour: Int,
+    minute: Int,
+): String {
     val formatter = DateTimeFormatter.ofPattern("h:mm a")
     return LocalTime.of(hour.coerceIn(0, 23), minute.coerceIn(0, 59)).format(formatter)
 }

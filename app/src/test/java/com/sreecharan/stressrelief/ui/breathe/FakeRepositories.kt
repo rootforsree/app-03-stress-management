@@ -23,8 +23,7 @@ class FakeBreathingRepository : BreathingRepository {
     val completedDays = mutableListOf<Pair<String, Int>>()
     val programsFlow = MutableStateFlow<List<ProgramProgress>>(emptyList())
 
-    override fun observeRecentSessions(limit: Int): Flow<List<BreathingSession>> =
-        flowOf(emptyList())
+    override fun observeRecentSessions(limit: Int): Flow<List<BreathingSession>> = flowOf(emptyList())
 
     override suspend fun recordSession(
         goal: String,
@@ -37,7 +36,10 @@ class FakeBreathingRepository : BreathingRepository {
 
     override fun observePrograms(): Flow<List<ProgramProgress>> = programsFlow
 
-    override suspend fun completeProgramDay(programId: String, day: Int) {
+    override suspend fun completeProgramDay(
+        programId: String,
+        day: Int,
+    ) {
         completedDays += programId to day
     }
 }
@@ -50,13 +52,23 @@ class FakeWellnessRepository : WellnessRepository {
 
     override fun observeTodayCheckIn(): Flow<MoodCheckIn?> = flowOf(null)
 
-    override suspend fun saveMoodCheckIn(score: Int, activities: List<String>, note: String) = Unit
+    override suspend fun saveMoodCheckIn(
+        score: Int,
+        activities: List<String>,
+        note: String,
+    ) = Unit
 
     override fun observeJournalEntries(): Flow<List<JournalEntry>> = flowOf(emptyList())
 
-    override suspend fun saveJournalEntry(prompt: String, text: String): Long = -1L
+    override suspend fun saveJournalEntry(
+        prompt: String,
+        text: String,
+    ): Long = -1L
 
-    override suspend fun updateJournalEntry(id: Long, text: String) = Unit
+    override suspend fun updateJournalEntry(
+        id: Long,
+        text: String,
+    ) = Unit
 
     override suspend fun deleteJournalEntry(id: Long) = Unit
 

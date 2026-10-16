@@ -3,10 +3,10 @@ package com.sreecharan.stressrelief.notifications
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import com.sreecharan.stressrelief.di.IoDispatcher
 import com.sreecharan.stressrelief.data.reminders.ReminderTimes
 import com.sreecharan.stressrelief.data.repository.SettingsRepository
 import com.sreecharan.stressrelief.data.repository.WellnessRepository
+import com.sreecharan.stressrelief.di.IoDispatcher
 import com.sreecharan.stressrelief.widget.AuraWidgetUpdater
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineDispatcher
@@ -37,11 +37,15 @@ class AuraReminderReceiver : BroadcastReceiver() {
 
     @Inject lateinit var widgetUpdater: AuraWidgetUpdater
 
-    @Inject @IoDispatcher lateinit var ioDispatcher: CoroutineDispatcher
+    @Inject @IoDispatcher
+    lateinit var ioDispatcher: CoroutineDispatcher
 
     private val scope get() = CoroutineScope(SupervisorJob() + ioDispatcher)
 
-    override fun onReceive(context: Context, intent: Intent) {
+    override fun onReceive(
+        context: Context,
+        intent: Intent,
+    ) {
         val pendingResult = goAsync()
         scope.launch {
             try {
@@ -63,11 +67,13 @@ class AuraReminderReceiver : BroadcastReceiver() {
                 if (!inQuietHours) notifications.postMorningCheckIn()
                 scheduler.scheduleAll() // re-arm tomorrow's occurrence
             }
+
             AuraReminderScheduler.ACTION_NUDGE -> {
                 val checkedInToday = wellnessRepository.observeTodayCheckIn().first() != null
                 if (!checkedInToday && !inQuietHours) notifications.postStreakNudge()
                 scheduler.scheduleAll()
             }
+
             AuraReminderScheduler.ACTION_WINDDOWN -> {
                 if (!inQuietHours) notifications.postEveningWindDown()
                 scheduler.scheduleAll()

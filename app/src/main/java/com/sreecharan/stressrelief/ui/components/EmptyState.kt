@@ -43,10 +43,11 @@ fun EmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
-            modifier = Modifier
-                .size(88.dp)
-                .clip(CircleShape)
-                .background(AuroraBrushes.hero(darkTheme)),
+            modifier =
+                Modifier
+                    .size(88.dp)
+                    .clip(CircleShape)
+                    .background(AuroraBrushes.hero(darkTheme)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(

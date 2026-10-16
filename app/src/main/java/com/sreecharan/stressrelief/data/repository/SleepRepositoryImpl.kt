@@ -1,11 +1,11 @@
 package com.sreecharan.stressrelief.data.repository
 
-import com.sreecharan.stressrelief.di.IoDispatcher
 import com.sreecharan.stressrelief.data.local.JsonCodec
 import com.sreecharan.stressrelief.data.local.SleepSessionDao
 import com.sreecharan.stressrelief.data.local.SleepSessionEntity
 import com.sreecharan.stressrelief.data.local.toDomain
 import com.sreecharan.stressrelief.data.model.SleepSession
+import com.sreecharan.stressrelief.di.IoDispatcher
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
@@ -21,7 +21,10 @@ class SleepRepositoryImpl
         private val sleepSessionDao: SleepSessionDao,
         @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     ) : SleepRepository {
-        override suspend fun recordSleepSession(durationMin: Int, sounds: List<String>) {
+        override suspend fun recordSleepSession(
+            durationMin: Int,
+            sounds: List<String>,
+        ) {
             withContext(ioDispatcher) {
                 val minutes = durationMin.coerceAtLeast(1)
                 sleepSessionDao.insert(

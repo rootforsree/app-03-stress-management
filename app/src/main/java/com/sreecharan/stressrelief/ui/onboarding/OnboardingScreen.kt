@@ -46,7 +46,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sreecharan.stressrelief.R
 import com.sreecharan.stressrelief.ui.components.AuroraButton
@@ -60,11 +60,24 @@ private data class OnboardingPage(
     val bodyRes: Int,
 )
 
-private val PAGES = listOf(
-    OnboardingPage(Icons.Filled.Air, R.string.onboarding_page1_title, R.string.onboarding_page1_body),
-    OnboardingPage(Icons.Filled.SentimentSatisfied, R.string.onboarding_page2_title, R.string.onboarding_page2_body),
-    OnboardingPage(Icons.Filled.Bedtime, R.string.onboarding_page3_title, R.string.onboarding_page3_body),
-)
+private val PAGES =
+    listOf(
+        OnboardingPage(
+            Icons.Filled.Air,
+            R.string.onboarding_page1_title,
+            R.string.onboarding_page1_body,
+        ),
+        OnboardingPage(
+            Icons.Filled.SentimentSatisfied,
+            R.string.onboarding_page2_title,
+            R.string.onboarding_page2_body,
+        ),
+        OnboardingPage(
+            Icons.Filled.Bedtime,
+            R.string.onboarding_page3_title,
+            R.string.onboarding_page3_body,
+        ),
+    )
 
 /** Stateful route: owns the ViewModel, collects state and one-shot events. */
 @Composable
@@ -136,15 +149,17 @@ fun OnboardingContent(
 
     Scaffold(modifier = modifier) { innerPadding ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .background(AuroraBrushes.calmWash(darkTheme)),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .background(AuroraBrushes.calmWash(darkTheme)),
         ) {
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 24.dp),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 24.dp),
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
@@ -191,9 +206,10 @@ fun OnboardingContent(
                 }
 
                 AuroraButton(
-                    text = stringResource(
-                        if (isLastPage) R.string.onboarding_get_started else R.string.onboarding_next,
-                    ),
+                    text =
+                        stringResource(
+                            if (isLastPage) R.string.onboarding_get_started else R.string.onboarding_next,
+                        ),
                     onClick = onNext,
                     gradient = true,
                     modifier = Modifier.fillMaxWidth().height(60.dp),
@@ -240,16 +256,20 @@ private fun ReminderOptInCard(
 }
 
 @Composable
-private fun OnboardingPageContent(page: OnboardingPage, darkTheme: Boolean) {
+private fun OnboardingPageContent(
+    page: OnboardingPage,
+    darkTheme: Boolean,
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Box(
-            modifier = Modifier
-                .size(168.dp)
-                .clip(CircleShape)
-                .background(AuroraBrushes.hero(darkTheme)),
+            modifier =
+                Modifier
+                    .size(168.dp)
+                    .clip(CircleShape)
+                    .background(AuroraBrushes.hero(darkTheme)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
@@ -278,7 +298,11 @@ private fun OnboardingPageContent(page: OnboardingPage, darkTheme: Boolean) {
 }
 
 @Composable
-private fun PageIndicator(page: Int, totalPages: Int, modifier: Modifier = Modifier) {
+private fun PageIndicator(
+    page: Int,
+    totalPages: Int,
+    modifier: Modifier = Modifier,
+) {
     val darkTheme = LocalAuroraDark.current
     val cd = stringResource(R.string.onboarding_page_indicator_cd, page + 1, totalPages)
     Row(
@@ -288,17 +312,18 @@ private fun PageIndicator(page: Int, totalPages: Int, modifier: Modifier = Modif
         repeat(totalPages) { index ->
             val selected = index == page
             Box(
-                modifier = Modifier
-                    .width(if (selected) 28.dp else 8.dp)
-                    .height(8.dp)
-                    .clip(CircleShape)
-                    .then(
-                        if (selected) {
-                            Modifier.background(AuroraBrushes.hero(darkTheme))
-                        } else {
-                            Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
-                        },
-                    ),
+                modifier =
+                    Modifier
+                        .width(if (selected) 28.dp else 8.dp)
+                        .height(8.dp)
+                        .clip(CircleShape)
+                        .then(
+                            if (selected) {
+                                Modifier.background(AuroraBrushes.hero(darkTheme))
+                            } else {
+                                Modifier.background(MaterialTheme.colorScheme.surfaceVariant)
+                            },
+                        ),
             )
         }
     }

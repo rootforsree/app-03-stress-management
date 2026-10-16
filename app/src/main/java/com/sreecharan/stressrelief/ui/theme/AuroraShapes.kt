@@ -24,10 +24,11 @@ object AuroraShapeTokens {
     val chip = RoundedCornerShape(12.dp)
 }
 
-val AuroraShapes = Shapes(
-    extraSmall = RoundedCornerShape(12.dp),
-    small = RoundedCornerShape(16.dp),
-    medium = RoundedCornerShape(22.dp),
-    large = RoundedCornerShape(28.dp),
-    extraLarge = RoundedCornerShape(32.dp),
-)
+val AuroraShapes =
+    Shapes(
+        extraSmall = RoundedCornerShape(12.dp),
+        small = RoundedCornerShape(16.dp),
+        medium = RoundedCornerShape(22.dp),
+        large = RoundedCornerShape(28.dp),
+        extraLarge = RoundedCornerShape(32.dp),
+    )

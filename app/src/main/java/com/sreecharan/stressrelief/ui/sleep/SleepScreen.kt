@@ -69,11 +69,13 @@ fun SleepScreen(
     }
 
     when (val s = state) {
-        SleepUiState.Loading ->
+        SleepUiState.Loading -> {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
-        is SleepUiState.Content ->
+        }
+
+        is SleepUiState.Content -> {
             SleepMixerContent(
                 state = s,
                 onLayerToggled = viewModel::onLayerToggled,
@@ -82,6 +84,7 @@ fun SleepScreen(
                 onUpsellClicked = viewModel::onPremiumUpsellClicked,
                 onBeginClicked = viewModel::onBeginClicked,
             )
+        }
     }
 }
 
@@ -252,70 +255,69 @@ private fun SoundLayerContent(
 ) {
     val locked = !layerState.isUnlocked
     Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Icon(
-                    imageVector = if (locked) Icons.Filled.Lock else Icons.Filled.Waves,
-                    contentDescription = null,
-                    tint =
-                        if (locked) {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        } else {
-                            MaterialTheme.colorScheme.primary
-                        },
-                    modifier = Modifier.size(28.dp),
-                )
-                Spacer(Modifier.size(12.dp))
-                Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            text = stringResource(layerState.layer.nameRes),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        if (layerState.layer.isPremium) {
-                            Spacer(Modifier.size(8.dp))
-                            Text(
-                                text = stringResource(R.string.sleep_premium_badge),
-                                style = MaterialTheme.typography.labelSmall,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.tertiary,
-                                modifier =
-                                    Modifier
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(
-                                            MaterialTheme.colorScheme.tertiaryContainer,
-                                        )
-                                        .padding(horizontal = 8.dp, vertical = 2.dp),
-                            )
-                        }
-                    }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Icon(
+                imageVector = if (locked) Icons.Filled.Lock else Icons.Filled.Waves,
+                contentDescription = null,
+                tint =
+                    if (locked) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    },
+                modifier = Modifier.size(28.dp),
+            )
+            Spacer(Modifier.size(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = stringResource(layerState.layer.descriptionRes),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        text = stringResource(layerState.layer.nameRes),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
+                    if (layerState.layer.isPremium) {
+                        Spacer(Modifier.size(8.dp))
+                        Text(
+                            text = stringResource(R.string.sleep_premium_badge),
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.tertiary,
+                            modifier =
+                                Modifier
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(
+                                        MaterialTheme.colorScheme.tertiaryContainer,
+                                    ).padding(horizontal = 8.dp, vertical = 2.dp),
+                        )
+                    }
                 }
-                Switch(
-                    checked = layerState.isEnabled && layerState.isUnlocked,
-                    onCheckedChange = onToggled,
-                    enabled = layerState.isUnlocked,
+                Text(
+                    text = stringResource(layerState.layer.descriptionRes),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            if (layerState.isEnabled && layerState.isUnlocked) {
-                Spacer(Modifier.height(4.dp))
-                Slider(
-                    value = layerState.volume,
-                    onValueChange = onVolumeChanged,
-                    valueRange = 0f..1f,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
+            Switch(
+                checked = layerState.isEnabled && layerState.isUnlocked,
+                onCheckedChange = onToggled,
+                enabled = layerState.isUnlocked,
+            )
+        }
+        if (layerState.isEnabled && layerState.isUnlocked) {
+            Spacer(Modifier.height(4.dp))
+            Slider(
+                value = layerState.volume,
+                onValueChange = onVolumeChanged,
+                valueRange = 0f..1f,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
+}
 
 @Composable
 private fun PremiumUpsellCard(onClicked: () -> Unit) {

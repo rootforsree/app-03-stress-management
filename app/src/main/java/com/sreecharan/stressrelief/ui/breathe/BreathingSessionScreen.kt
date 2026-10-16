@@ -55,7 +55,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sreecharan.stressrelief.R
 import com.sreecharan.stressrelief.ui.components.AuroraButton
@@ -105,9 +105,13 @@ fun BreathingSessionScreen(
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                is BreathingSessionEvent.PhaseChanged ->
+                is BreathingSessionEvent.PhaseChanged -> {
                     haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                BreathingSessionEvent.NavigateBack -> onFinished()
+                }
+
+                BreathingSessionEvent.NavigateBack -> {
+                    onFinished()
+                }
             }
         }
     }
@@ -125,39 +129,47 @@ private fun BreathingSessionContent(
     onExitEarly: () -> Unit,
 ) {
     when (state) {
-        BreathingSessionUiState.Loading -> Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator()
-        }
-
-        is BreathingSessionUiState.Ready -> Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = stringResource(R.string.session_get_ready),
-                    style = MaterialTheme.typography.headlineMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    text = state.patternName,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        BreathingSessionUiState.Loading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
             }
         }
 
-        is BreathingSessionUiState.Active -> ActiveSession(
-            state = state,
-            onPauseResume = onPauseResume,
-            onExitEarly = onExitEarly,
-        )
+        is BreathingSessionUiState.Ready -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = stringResource(R.string.session_get_ready),
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = state.patternName,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
 
-        is BreathingSessionUiState.Celebrating -> Celebration(state = state)
+        is BreathingSessionUiState.Active -> {
+            ActiveSession(
+                state = state,
+                onPauseResume = onPauseResume,
+                onExitEarly = onExitEarly,
+            )
+        }
+
+        is BreathingSessionUiState.Celebrating -> {
+            Celebration(state = state)
+        }
     }
 }
 
@@ -181,11 +193,12 @@ private fun ActiveSession(
             return@LaunchedEffect
         }
         if (state.isPaused) return@LaunchedEffect
-        val target = if (state.phase == BreathPhase.INHALE || state.phase == BreathPhase.HOLD) {
-            ORB_INHALE_SCALE
-        } else {
-            1f
-        }
+        val target =
+            if (state.phase == BreathPhase.INHALE || state.phase == BreathPhase.HOLD) {
+                ORB_INHALE_SCALE
+            } else {
+                1f
+            }
         val remainingMs = (state.phaseDurationMs - state.phaseElapsedMs).coerceAtLeast(1L).toInt()
         orbScale.animateTo(
             targetValue = target,
@@ -201,12 +214,13 @@ private fun ActiveSession(
         } else {
             listOf(DawnTeal, DawnCyan, DawnViolet, DawnPink)
         }
-    val colorTargets = when (state.phase) {
-        BreathPhase.INHALE -> teal to cyan
-        BreathPhase.HOLD -> cyan to violet
-        BreathPhase.EXHALE -> violet to pink
-        BreathPhase.HOLD_AFTER -> pink to teal
-    }
+    val colorTargets =
+        when (state.phase) {
+            BreathPhase.INHALE -> teal to cyan
+            BreathPhase.HOLD -> cyan to violet
+            BreathPhase.EXHALE -> violet to pink
+            BreathPhase.HOLD_AFTER -> pink to teal
+        }
     val orbColor1 by animateColorAsState(
         targetValue = colorTargets.first,
         animationSpec = MotionTokens.gentleSpring(),
@@ -218,24 +232,27 @@ private fun ActiveSession(
         label = "orbColor2",
     )
 
-    val phaseLabelRes = when (state.phase) {
-        BreathPhase.INHALE -> R.string.phase_inhale
-        BreathPhase.HOLD -> R.string.phase_hold
-        BreathPhase.EXHALE -> R.string.phase_exhale
-        BreathPhase.HOLD_AFTER -> R.string.phase_hold_after
-    }
+    val phaseLabelRes =
+        when (state.phase) {
+            BreathPhase.INHALE -> R.string.phase_inhale
+            BreathPhase.HOLD -> R.string.phase_hold
+            BreathPhase.EXHALE -> R.string.phase_exhale
+            BreathPhase.HOLD_AFTER -> R.string.phase_hold_after
+        }
 
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AuroraBrushes.calmWash(darkTheme)),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .background(AuroraBrushes.calmWash(darkTheme)),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .navigationBarsPadding()
-                .padding(horizontal = 20.dp),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Row(
@@ -292,9 +309,10 @@ private fun ActiveSession(
                 modifier = Modifier.padding(bottom = 12.dp),
             ) {
                 AuroraButton(
-                    text = stringResource(
-                        if (state.isPaused) R.string.session_resume else R.string.session_pause,
-                    ),
+                    text =
+                        stringResource(
+                            if (state.isPaused) R.string.session_resume else R.string.session_pause,
+                        ),
                     onClick = onPauseResume,
                     leadingIcon = if (state.isPaused) Icons.Rounded.PlayArrow else Icons.Rounded.Pause,
                 )
@@ -339,50 +357,53 @@ private fun BreathingOrb(
     halo: Brush,
     darkTheme: Boolean,
 ) {
+    val orbDesc = stringResource(R.string.session_orb_desc)
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .size(300.dp)
-            .semantics { contentDescription = stringResource(R.string.session_orb_desc) },
+        modifier =
+            Modifier
+                .size(300.dp)
+                .semantics { contentDescription = orbDesc },
     ) {
         // Aurora halo breathing with the orb.
         Box(
-            modifier = Modifier
-                .size(280.dp)
-                .graphicsLayer {
-                    val s = orbScale.value
-                    scaleX = s
-                    scaleY = s
-                    alpha = HALO_ALPHA
-                }
-                .background(halo, CircleShape),
+            modifier =
+                Modifier
+                    .size(280.dp)
+                    .graphicsLayer {
+                        val s = orbScale.value
+                        scaleX = s
+                        scaleY = s
+                        alpha = HALO_ALPHA
+                    }.background(halo, CircleShape),
         )
         // The living gradient creature.
         Box(
-            modifier = Modifier
-                .size(200.dp)
-                .graphicsLayer {
-                    scaleX = orbScale.value
-                    scaleY = orbScale.value
-                }
-                .background(
-                    Brush.radialGradient(
-                        listOf(Color.White.copy(alpha = ORB_SHEEN_ALPHA), orbColor1, orbColor2),
+            modifier =
+                Modifier
+                    .size(200.dp)
+                    .graphicsLayer {
+                        scaleX = orbScale.value
+                        scaleY = orbScale.value
+                    }.background(
+                        Brush.radialGradient(
+                            listOf(Color.White.copy(alpha = ORB_SHEEN_ALPHA), orbColor1, orbColor2),
+                        ),
+                        CircleShape,
                     ),
-                    CircleShape,
-                ),
         )
         // Gradient progress ring: round x of n. Night-aurora stops in dark mode.
         val trackColor = MaterialTheme.colorScheme.surfaceVariant
-        val sweep = remember(darkTheme) {
-            val stops =
-                if (darkTheme) {
-                    listOf(NightTeal, NightCyan, NightViolet, NightPink, NightTeal)
-                } else {
-                    listOf(DawnTeal, DawnCyan, DawnViolet, DawnPink, DawnTeal)
-                }
-            Brush.sweepGradient(stops)
-        }
+        val sweep =
+            remember(darkTheme) {
+                val stops =
+                    if (darkTheme) {
+                        listOf(NightTeal, NightCyan, NightViolet, NightPink, NightTeal)
+                    } else {
+                        listOf(DawnTeal, DawnCyan, DawnViolet, DawnPink, DawnTeal)
+                    }
+                Brush.sweepGradient(stops)
+            }
         Canvas(modifier = Modifier.size(280.dp)) {
             drawArc(
                 color = trackColor,
@@ -424,13 +445,13 @@ private fun Celebration(state: BreathingSessionUiState.Celebrating) {
             modifier = Modifier.padding(32.dp),
         ) {
             Box(
-                modifier = Modifier
-                    .size(120.dp)
-                    .graphicsLayer {
-                        scaleX = pop
-                        scaleY = pop
-                    }
-                    .background(MaterialTheme.colorScheme.tertiaryContainer, CircleShape),
+                modifier =
+                    Modifier
+                        .size(120.dp)
+                        .graphicsLayer {
+                            scaleX = pop
+                            scaleY = pop
+                        }.background(MaterialTheme.colorScheme.tertiaryContainer, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -475,19 +496,20 @@ private fun ConfettiOverlay() {
     LaunchedEffect(Unit) {
         progress.animateTo(1f, tween(durationMillis = CONFETTI_DURATION_MS))
     }
-    val particles = remember {
-        val rnd = Random(CONFETTI_SEED)
-        List(CONFETTI_COUNT) {
-            ConfettiParticle(
-                xFrac = rnd.nextFloat(),
-                yStartFrac = rnd.nextFloat() * CONFETTI_START_BAND,
-                sizeDp = rnd.nextFloat() * CONFETTI_SIZE_RANGE_DP + CONFETTI_MIN_SIZE_DP,
-                driftFrac = rnd.nextFloat() * CONFETTI_DRIFT - CONFETTI_DRIFT / 2f,
-                alpha = rnd.nextFloat() * CONFETTI_ALPHA_RANGE + CONFETTI_MIN_ALPHA,
-                round = rnd.nextBoolean(),
-            )
+    val particles =
+        remember {
+            val rnd = Random(CONFETTI_SEED)
+            List(CONFETTI_COUNT) {
+                ConfettiParticle(
+                    xFrac = rnd.nextFloat(),
+                    yStartFrac = rnd.nextFloat() * CONFETTI_START_BAND,
+                    sizeDp = rnd.nextFloat() * CONFETTI_SIZE_RANGE_DP + CONFETTI_MIN_SIZE_DP,
+                    driftFrac = rnd.nextFloat() * CONFETTI_DRIFT - CONFETTI_DRIFT / 2f,
+                    alpha = rnd.nextFloat() * CONFETTI_ALPHA_RANGE + CONFETTI_MIN_ALPHA,
+                    round = rnd.nextBoolean(),
+                )
+            }
         }
-    }
     Canvas(modifier = Modifier.fillMaxSize()) {
         val p = progress.value
         val fade = (1f - p).coerceIn(0f, 1f)

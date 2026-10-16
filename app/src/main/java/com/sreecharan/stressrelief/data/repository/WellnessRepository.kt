@@ -11,16 +11,26 @@ interface WellnessRepository {
 
     fun observeTodayCheckIn(): Flow<MoodCheckIn?>
 
-    suspend fun saveMoodCheckIn(score: Int, activities: List<String>, note: String)
+    suspend fun saveMoodCheckIn(
+        score: Int,
+        activities: List<String>,
+        note: String,
+    )
 
     fun observeJournalEntries(): Flow<List<JournalEntry>>
 
     /** Single entry by id (null when deleted); avoids loading the whole table. */
     fun observeJournalEntry(id: Long): Flow<JournalEntry?>
 
-    suspend fun saveJournalEntry(prompt: String, text: String): Long
+    suspend fun saveJournalEntry(
+        prompt: String,
+        text: String,
+    ): Long
 
-    suspend fun updateJournalEntry(id: Long, text: String)
+    suspend fun updateJournalEntry(
+        id: Long,
+        text: String,
+    )
 
     suspend fun deleteJournalEntry(id: Long)
 

@@ -17,7 +17,5 @@ import javax.inject.Singleton
 abstract class HealthBindings {
     @Binds
     @Singleton
-    abstract fun bindHealthConnectStateProvider(
-        client: HealthConnectClient,
-    ): HealthConnectStateProvider
+    abstract fun bindHealthConnectStateProvider(client: HealthConnectClient): HealthConnectStateProvider
 }

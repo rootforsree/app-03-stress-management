@@ -26,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -63,11 +64,13 @@ fun SleepSessionScreen(
     }
 
     when (val s = state) {
-        SleepSessionUiState.Loading ->
+        SleepSessionUiState.Loading -> {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
             }
-        is SleepSessionUiState.Content ->
+        }
+
+        is SleepSessionUiState.Content -> {
             // The wind-down is an always-dark immersive surface (the doc's
             // "evening gradient mode"): pin the dark scheme so the roles below
             // stay correct even when the app theme is light.
@@ -77,6 +80,7 @@ fun SleepSessionScreen(
                     onStop = viewModel::onStopClicked,
                 )
             }
+        }
     }
 }
 
@@ -179,16 +183,17 @@ private fun AuroraBackground() {
             0.8f
         } else {
             val transition = rememberInfiniteTransition(label = "aurora")
-            transition.animateFloat(
-                initialValue = 0f,
-                targetValue = (2 * PI).toFloat(),
-                animationSpec =
-                    infiniteRepeatable(
-                        animation = tween(20000, easing = LinearEasing),
-                        repeatMode = RepeatMode.Restart,
-                    ),
-                label = "drift",
-            ).value
+            transition
+                .animateFloat(
+                    initialValue = 0f,
+                    targetValue = (2 * PI).toFloat(),
+                    animationSpec =
+                        infiniteRepeatable(
+                            animation = tween(20000, easing = LinearEasing),
+                            repeatMode = RepeatMode.Restart,
+                        ),
+                    label = "drift",
+                ).value
         }
     val base = MaterialTheme.colorScheme.background
     Canvas(modifier = Modifier.fillMaxSize()) {

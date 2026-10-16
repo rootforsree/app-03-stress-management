@@ -35,7 +35,11 @@ class FakeWellnessRepository(
 
     override fun observeTodayCheckIn(): Flow<MoodCheckIn?> = todayCheckInFlow
 
-    override suspend fun saveMoodCheckIn(score: Int, activities: List<String>, note: String) {
+    override suspend fun saveMoodCheckIn(
+        score: Int,
+        activities: List<String>,
+        note: String,
+    ) {
         savedMoods += Triple(score, activities, note)
     }
 
@@ -44,14 +48,20 @@ class FakeWellnessRepository(
     override fun observeJournalEntry(id: Long): Flow<JournalEntry?> =
         journalEntriesFlow.map { list -> list.firstOrNull { it.id == id } }
 
-    override suspend fun saveJournalEntry(prompt: String, text: String): Long {
+    override suspend fun saveJournalEntry(
+        prompt: String,
+        text: String,
+    ): Long {
         val id = nextJournalId++
         journalEntriesFlow.value =
             journalEntriesFlow.value + JournalEntry(id, System.currentTimeMillis(), prompt, text)
         return id
     }
 
-    override suspend fun updateJournalEntry(id: Long, text: String) {
+    override suspend fun updateJournalEntry(
+        id: Long,
+        text: String,
+    ) {
         updatedJournals += id to text
         journalEntriesFlow.value =
             journalEntriesFlow.value.map { if (it.id == id) it.copy(text = text) else it }
@@ -66,8 +76,7 @@ class FakeWellnessRepository(
 
     override fun observeTotalCalmMinutes(): Flow<Int> = calmMinutesFlow
 
-    override suspend fun computeStressScore(): StressScore =
-        stressScoreResult ?: StressScore(50, "Steady", emptyList())
+    override suspend fun computeStressScore(): StressScore = stressScoreResult ?: StressScore(50, "Steady", emptyList())
 
     override suspend fun markBreathingDone(minutes: Int) {
         breathingDoneMinutes = minutes

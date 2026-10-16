@@ -1,11 +1,13 @@
 package com.sreecharan.stressrelief.ui.breathe
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,7 +40,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sreecharan.stressrelief.R
 import com.sreecharan.stressrelief.ui.components.AuroraCard
@@ -63,12 +65,14 @@ fun ProgramsScreen(
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                is ProgramsEvent.StartProgramSession -> onStartProgramSession(
-                    event.goal,
-                    event.patternId,
-                    event.programId,
-                    event.day,
-                )
+                is ProgramsEvent.StartProgramSession -> {
+                    onStartProgramSession(
+                        event.goal,
+                        event.patternId,
+                        event.programId,
+                        event.day,
+                    )
+                }
             }
         }
     }
@@ -86,24 +90,28 @@ private fun ProgramsScreenContent(
     onRetry: () -> Unit,
 ) {
     when (state) {
-        ProgramsUiState.Loading -> Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator()
+        ProgramsUiState.Loading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
         }
 
-        ProgramsUiState.Error -> Box(
-            modifier = Modifier.fillMaxSize().statusBarsPadding(),
-            contentAlignment = Alignment.Center,
-        ) {
-            EmptyState(
-                icon = Icons.Rounded.SelfImprovement,
-                title = stringResource(R.string.programs_error_title),
-                message = stringResource(R.string.programs_error_message),
-                actionLabel = stringResource(R.string.breathe_retry),
-                onActionClick = onRetry,
-            )
+        ProgramsUiState.Error -> {
+            Box(
+                modifier = Modifier.fillMaxSize().statusBarsPadding(),
+                contentAlignment = Alignment.Center,
+            ) {
+                EmptyState(
+                    icon = Icons.Rounded.SelfImprovement,
+                    title = stringResource(R.string.programs_error_title),
+                    message = stringResource(R.string.programs_error_message),
+                    actionLabel = stringResource(R.string.breathe_retry),
+                    onActionClick = onRetry,
+                )
+            }
         }
 
         is ProgramsUiState.Content -> {
@@ -228,30 +236,35 @@ private fun DayCard(
     onDayClick: (programId: String, day: Int, patternId: String, status: DayStatus) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val containerColor = when (day.status) {
-        DayStatus.DONE -> MaterialTheme.colorScheme.tertiaryContainer
-        DayStatus.CURRENT -> MaterialTheme.colorScheme.primaryContainer
-        DayStatus.LOCKED -> MaterialTheme.colorScheme.surfaceVariant
-    }
-    val contentColor = when (day.status) {
-        DayStatus.DONE -> MaterialTheme.colorScheme.onTertiaryContainer
-        DayStatus.CURRENT -> MaterialTheme.colorScheme.onPrimaryContainer
-        DayStatus.LOCKED -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-    }
-    val colors = CardDefaults.cardColors(
-        containerColor = containerColor,
-        contentColor = contentColor,
-    )
-    val statusIcon = when (day.status) {
-        DayStatus.DONE -> Icons.Rounded.Check
-        DayStatus.CURRENT -> Icons.Rounded.PlayArrow
-        DayStatus.LOCKED -> Icons.Rounded.Lock
-    }
-    val statusLabelRes = when (day.status) {
-        DayStatus.DONE -> R.string.program_day_done
-        DayStatus.CURRENT -> R.string.program_day_start
-        DayStatus.LOCKED -> R.string.program_day_locked
-    }
+    val containerColor =
+        when (day.status) {
+            DayStatus.DONE -> MaterialTheme.colorScheme.tertiaryContainer
+            DayStatus.CURRENT -> MaterialTheme.colorScheme.primaryContainer
+            DayStatus.LOCKED -> MaterialTheme.colorScheme.surfaceVariant
+        }
+    val contentColor =
+        when (day.status) {
+            DayStatus.DONE -> MaterialTheme.colorScheme.onTertiaryContainer
+            DayStatus.CURRENT -> MaterialTheme.colorScheme.onPrimaryContainer
+            DayStatus.LOCKED -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+        }
+    val colors =
+        CardDefaults.cardColors(
+            containerColor = containerColor,
+            contentColor = contentColor,
+        )
+    val statusIcon =
+        when (day.status) {
+            DayStatus.DONE -> Icons.Rounded.Check
+            DayStatus.CURRENT -> Icons.Rounded.PlayArrow
+            DayStatus.LOCKED -> Icons.Rounded.Lock
+        }
+    val statusLabelRes =
+        when (day.status) {
+            DayStatus.DONE -> R.string.program_day_done
+            DayStatus.CURRENT -> R.string.program_day_start
+            DayStatus.LOCKED -> R.string.program_day_locked
+        }
     val clickable = day.status == DayStatus.CURRENT
     val cardContent: @Composable () -> Unit = {
         Column(modifier = Modifier.padding(14.dp)) {

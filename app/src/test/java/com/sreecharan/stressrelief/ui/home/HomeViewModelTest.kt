@@ -9,11 +9,11 @@ import com.sreecharan.stressrelief.data.model.MoodCheckIn
 import com.sreecharan.stressrelief.data.model.StressScore
 import com.sreecharan.stressrelief.ui.FakeWellnessRepository
 import com.sreecharan.stressrelief.ui.runViewModelTest
+import kotlinx.coroutines.test.advanceUntilIdle
+import org.junit.jupiter.api.Test
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.ZoneId
-import kotlinx.coroutines.test.advanceUntilIdle
-import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -30,17 +30,22 @@ private class FakeHealthConnectStateProvider(
 
     override fun permissionContract(): ActivityResultContract<Set<String>, Set<String>> =
         object : ActivityResultContract<Set<String>, Set<String>>() {
-            override fun createIntent(context: Context, input: Set<String>): Intent = Intent()
+            override fun createIntent(
+                context: Context,
+                input: Set<String>,
+            ): Intent = Intent()
 
-            override fun parseResult(resultCode: Int, intent: Intent?): Set<String> = emptySet()
+            override fun parseResult(
+                resultCode: Int,
+                intent: Intent?,
+            ): Set<String> = emptySet()
         }
 }
 
 class HomeViewModelTest {
     private val zone = ZoneId.systemDefault()
 
-    private fun ms(day: LocalDate): Long =
-        day.atStartOfDay(zone).toInstant().toEpochMilli()
+    private fun ms(day: LocalDate): Long = day.atStartOfDay(zone).toInstant().toEpochMilli()
 
     private fun createVm(
         repo: FakeWellnessRepository,

@@ -13,6 +13,16 @@ object DeepLinks {
     const val MOOD = "aura://mood"
     const val BREATHE = "aura://breathe"
 
-    fun viewIntent(context: Context, uri: String): Intent =
-        Intent(Intent.ACTION_VIEW, uri.toUri()).setPackage(context.packageName)
+    /**
+     * Glance's actionStartActivity cannot carry an Intent data URI, so the
+     * widget passes the deep link as an action parameter; Glance delivers it
+     * as an intent extra keyed by this name. MainActivity rehydrates it into
+     * [Intent.data] before handing the intent to NavController.
+     */
+    const val EXTRA_DEEP_LINK = "aura_deep_link"
+
+    fun viewIntent(
+        context: Context,
+        uri: String,
+    ): Intent = Intent(Intent.ACTION_VIEW, uri.toUri()).setPackage(context.packageName)
 }

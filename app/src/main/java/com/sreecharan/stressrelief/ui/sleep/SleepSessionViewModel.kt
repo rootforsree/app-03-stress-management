@@ -1,8 +1,8 @@
 package com.sreecharan.stressrelief.ui.sleep
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.compose.runtime.Immutable
 import com.sreecharan.stressrelief.data.repository.SleepRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.collections.immutable.ImmutableList

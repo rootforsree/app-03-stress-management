@@ -12,7 +12,6 @@ import com.sreecharan.stressrelief.R
 import com.sreecharan.stressrelief.data.catalog.BreathingPattern
 import com.sreecharan.stressrelief.data.catalog.BreathingPatterns
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.channels.Channel
@@ -21,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import javax.inject.Inject
 
 /** Visual theme key for a goal card; resolved to gradient colors in the UI. */
 enum class GoalTheme {
@@ -63,7 +63,10 @@ sealed interface BreatheUiState {
 }
 
 sealed interface BreatheEvent {
-    data class OpenSession(val goal: String, val patternId: String) : BreatheEvent
+    data class OpenSession(
+        val goal: String,
+        val patternId: String,
+    ) : BreatheEvent
 }
 
 private data class GoalDef(
@@ -74,16 +77,17 @@ private data class GoalDef(
     val theme: GoalTheme,
 )
 
-private fun BreathingPattern.toUi(): PatternUi = PatternUi(
-    id = id,
-    name = name,
-    inhaleSec = inhaleSec,
-    holdSec = holdSec,
-    exhaleSec = exhaleSec,
-    holdAfterSec = holdAfterSec,
-    rounds = rounds,
-    description = description,
-)
+private fun BreathingPattern.toUi(): PatternUi =
+    PatternUi(
+        id = id,
+        name = name,
+        inhaleSec = inhaleSec,
+        holdSec = holdSec,
+        exhaleSec = exhaleSec,
+        holdAfterSec = holdAfterSec,
+        rounds = rounds,
+        description = description,
+    )
 
 /**
  * Breathe tab: four goal cards, each opening a pattern picker sheet.
@@ -91,78 +95,81 @@ private fun BreathingPattern.toUi(): PatternUi = PatternUi(
  * error state beyond the initial frame.
  */
 @HiltViewModel
-class BreatheViewModel @Inject constructor() : ViewModel() {
+class BreatheViewModel
+    @Inject
+    constructor() : ViewModel() {
+        private val _uiState = MutableStateFlow<BreatheUiState>(BreatheUiState.Loading)
+        val uiState: StateFlow<BreatheUiState> = _uiState.asStateFlow()
 
-    private val _uiState = MutableStateFlow<BreatheUiState>(BreatheUiState.Loading)
-    val uiState: StateFlow<BreatheUiState> = _uiState.asStateFlow()
+        private val _events = Channel<BreatheEvent>(Channel.BUFFERED)
+        val events: Flow<BreatheEvent> = _events.receiveAsFlow()
 
-    private val _events = Channel<BreatheEvent>(Channel.BUFFERED)
-    val events: Flow<BreatheEvent> = _events.receiveAsFlow()
+        init {
+            _uiState.value =
+                BreatheUiState.Content(
+                    goals = buildGoalCards().toImmutableList(),
+                    selectedGoal = null,
+                )
+        }
 
-    init {
-        _uiState.value = BreatheUiState.Content(
-            goals = buildGoalCards().toImmutableList(),
-            selectedGoal = null,
-        )
-    }
+        fun onGoalClick(goal: String) {
+            val content = _uiState.value as? BreatheUiState.Content ?: return
+            _uiState.value = content.copy(selectedGoal = goal)
+        }
 
-    fun onGoalClick(goal: String) {
-        val content = _uiState.value as? BreatheUiState.Content ?: return
-        _uiState.value = content.copy(selectedGoal = goal)
-    }
+        fun onPickerDismiss() {
+            val content = _uiState.value as? BreatheUiState.Content ?: return
+            _uiState.value = content.copy(selectedGoal = null)
+        }
 
-    fun onPickerDismiss() {
-        val content = _uiState.value as? BreatheUiState.Content ?: return
-        _uiState.value = content.copy(selectedGoal = null)
-    }
+        fun onPatternClick(patternId: String) {
+            val content = _uiState.value as? BreatheUiState.Content ?: return
+            val goal = content.selectedGoal ?: return
+            _uiState.value = content.copy(selectedGoal = null)
+            _events.trySend(BreatheEvent.OpenSession(goal, patternId))
+        }
 
-    fun onPatternClick(patternId: String) {
-        val content = _uiState.value as? BreatheUiState.Content ?: return
-        val goal = content.selectedGoal ?: return
-        _uiState.value = content.copy(selectedGoal = null)
-        _events.trySend(BreatheEvent.OpenSession(goal, patternId))
-    }
-
-    private fun buildGoalCards(): List<GoalCardUi> {
-        val defs = listOf(
-            GoalDef(
-                "CALM",
-                R.string.breathe_goal_calm,
-                R.string.breathe_goal_calm_sub,
-                Icons.Rounded.Spa,
-                GoalTheme.CALM,
-            ),
-            GoalDef(
-                "SLEEP",
-                R.string.breathe_goal_sleep,
-                R.string.breathe_goal_sleep_sub,
-                Icons.Rounded.Bedtime,
-                GoalTheme.SLEEP,
-            ),
-            GoalDef(
-                "FOCUS",
-                R.string.breathe_goal_focus,
-                R.string.breathe_goal_focus_sub,
-                Icons.Rounded.Psychology,
-                GoalTheme.FOCUS,
-            ),
-            GoalDef(
-                "SOS",
-                R.string.breathe_goal_sos,
-                R.string.breathe_goal_sos_sub,
-                Icons.Rounded.Sos,
-                GoalTheme.SOS,
-            ),
-        )
-        return defs.map { def ->
-            GoalCardUi(
-                goal = def.goal,
-                titleRes = def.titleRes,
-                subtitleRes = def.subtitleRes,
-                icon = def.icon,
-                theme = def.theme,
-                patterns = BreathingPatterns.forGoal(def.goal).map { it.toUi() }.toImmutableList(),
-            )
+        private fun buildGoalCards(): List<GoalCardUi> {
+            val defs =
+                listOf(
+                    GoalDef(
+                        "CALM",
+                        R.string.breathe_goal_calm,
+                        R.string.breathe_goal_calm_sub,
+                        Icons.Rounded.Spa,
+                        GoalTheme.CALM,
+                    ),
+                    GoalDef(
+                        "SLEEP",
+                        R.string.breathe_goal_sleep,
+                        R.string.breathe_goal_sleep_sub,
+                        Icons.Rounded.Bedtime,
+                        GoalTheme.SLEEP,
+                    ),
+                    GoalDef(
+                        "FOCUS",
+                        R.string.breathe_goal_focus,
+                        R.string.breathe_goal_focus_sub,
+                        Icons.Rounded.Psychology,
+                        GoalTheme.FOCUS,
+                    ),
+                    GoalDef(
+                        "SOS",
+                        R.string.breathe_goal_sos,
+                        R.string.breathe_goal_sos_sub,
+                        Icons.Rounded.Sos,
+                        GoalTheme.SOS,
+                    ),
+                )
+            return defs.map { def ->
+                GoalCardUi(
+                    goal = def.goal,
+                    titleRes = def.titleRes,
+                    subtitleRes = def.subtitleRes,
+                    icon = def.icon,
+                    theme = def.theme,
+                    patterns = BreathingPatterns.forGoal(def.goal).map { it.toUi() }.toImmutableList(),
+                )
+            }
         }
     }
-}

@@ -43,13 +43,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sreecharan.stressrelief.R
 import com.sreecharan.stressrelief.data.model.JournalEntry
 import com.sreecharan.stressrelief.navigation.JournalEditorRoute
-import com.sreecharan.stressrelief.ui.components.EmptyState
 import com.sreecharan.stressrelief.ui.components.AuraGradients
+import com.sreecharan.stressrelief.ui.components.EmptyState
 import com.sreecharan.stressrelief.ui.components.StaggerIn
 import java.time.Instant
 import java.time.ZoneId
@@ -118,16 +118,20 @@ private fun JournalContent(
         ) {
             Box(Modifier.fillMaxSize().background(AuraGradients.calmWash()))
             when (state) {
-                JournalListUiState.Loading ->
+                JournalListUiState.Loading -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Text(
                             stringResource(R.string.journal_loading),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                is JournalListUiState.Error ->
+                }
+
+                is JournalListUiState.Error -> {
                     JournalError(message = state.message, onRetry = onRetry)
-                is JournalListUiState.Content ->
+                }
+
+                is JournalListUiState.Content -> {
                     if (state.entries.isEmpty()) {
                         EmptyState(
                             icon = Icons.Filled.AutoAwesome,
@@ -143,6 +147,7 @@ private fun JournalContent(
                             onDeleteEntry = onDeleteEntry,
                         )
                     }
+                }
             }
         }
     }
@@ -260,7 +265,8 @@ private fun JournalCard(
 private val DateFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
 
 private fun formatDate(timestampMs: Long): String =
-    Instant.ofEpochMilli(timestampMs)
+    Instant
+        .ofEpochMilli(timestampMs)
         .atZone(ZoneId.systemDefault())
         .format(DateFormatter)
 

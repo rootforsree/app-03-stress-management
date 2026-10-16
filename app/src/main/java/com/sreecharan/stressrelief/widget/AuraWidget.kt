@@ -13,6 +13,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.action.Action
+import androidx.glance.action.ActionParameters
+import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.provideContent
@@ -34,6 +36,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.sreecharan.stressrelief.DeepLinks
+import com.sreecharan.stressrelief.MainActivity
 import com.sreecharan.stressrelief.R
 
 internal val KEY_WIDGET_STRESS_SCORE = intPreferencesKey("widget_stress_score")
@@ -55,14 +58,27 @@ class AuraWidget : GlanceAppWidget() {
 
     override val stateDefinition: GlanceStateDefinition<*> = PreferencesGlanceStateDefinition
 
-    override suspend fun provideGlance(context: Context, id: GlanceId) {
+    override suspend fun provideGlance(
+        context: Context,
+        id: GlanceId,
+    ) {
         provideContent {
             val prefs = currentState<Preferences>()
             val score = prefs[KEY_WIDGET_STRESS_SCORE]
             val label = prefs[KEY_WIDGET_STRESS_LABEL]
             val streak = prefs[KEY_WIDGET_STREAK] ?: 0
-            val moodIntent = DeepLinks.viewIntent(context, DeepLinks.MOOD)
-            val breatheIntent = DeepLinks.viewIntent(context, DeepLinks.BREATHE)
+            // Glance 1.1+ removed the Intent overload of actionStartActivity:
+            // the deep link travels as an action parameter and MainActivity
+            // rehydrates it into Intent.data.
+            val deepLinkKey = ActionParameters.Key<String>(DeepLinks.EXTRA_DEEP_LINK)
+            val moodAction =
+                actionStartActivity<MainActivity>(
+                    actionParametersOf(deepLinkKey to DeepLinks.MOOD),
+                )
+            val breatheAction =
+                actionStartActivity<MainActivity>(
+                    actionParametersOf(deepLinkKey to DeepLinks.BREATHE),
+                )
             WidgetContent(
                 score = score,
                 label = label,
@@ -78,8 +94,8 @@ class AuraWidget : GlanceAppWidget() {
                             R.string.widget_streak_many
                         },
                     ),
-                onMoodClick = actionStartActivity(moodIntent),
-                onBreatheClick = actionStartActivity(breatheIntent),
+                onMoodClick = moodAction,
+                onBreatheClick = breatheAction,
             )
         }
     }

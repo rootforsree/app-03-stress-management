@@ -12,7 +12,10 @@ class FakeSleepRepository(
     val sessionsFlow = MutableStateFlow(sessions)
     val recorded = mutableListOf<Pair<Int, List<String>>>()
 
-    override suspend fun recordSleepSession(durationMin: Int, sounds: List<String>) {
+    override suspend fun recordSleepSession(
+        durationMin: Int,
+        sounds: List<String>,
+    ) {
         recorded += durationMin to sounds
     }
 

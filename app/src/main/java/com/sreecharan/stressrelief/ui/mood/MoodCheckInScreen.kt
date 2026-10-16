@@ -45,7 +45,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.sreecharan.stressrelief.R
 import com.sreecharan.stressrelief.ui.components.AuraGradients
@@ -329,6 +329,7 @@ private fun MoodFace(
                     style = stroke,
                 )
             }
+
             2 -> {
                 // Slight frown.
                 drawArc(
@@ -341,6 +342,7 @@ private fun MoodFace(
                     style = stroke,
                 )
             }
+
             3 -> {
                 // Flat line.
                 drawLine(
@@ -351,6 +353,7 @@ private fun MoodFace(
                     cap = StrokeCap.Round,
                 )
             }
+
             4 -> {
                 // Smile.
                 drawArc(
@@ -363,6 +366,7 @@ private fun MoodFace(
                     style = stroke,
                 )
             }
+
             else -> {
                 // Big grin with cheeks.
                 drawArc(
