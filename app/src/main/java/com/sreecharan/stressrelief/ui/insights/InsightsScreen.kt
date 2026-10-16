@@ -81,6 +81,7 @@ import com.sreecharan.stressrelief.ui.theme.AuroraBrushes
 import com.sreecharan.stressrelief.ui.theme.LocalAuroraDark
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 import kotlinx.coroutines.launch
 
 /**
