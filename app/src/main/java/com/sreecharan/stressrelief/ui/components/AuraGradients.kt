@@ -92,13 +92,15 @@ fun rememberReduceMotion(): Boolean {
  * Uses the shared [MotionTokens] stagger window (30-50ms per item).
  * With reduced motion on, content renders immediately with no animation.
  *
- * Implemented as alpha/translation animations on a full-size box, never
+ * Implemented as alpha/translation animations on a [Column], never
  * AnimatedVisibility: the content is always laid out at its final size, so
  * staggered items never collapse to zero height (which yanked LazyColumn
- * scroll position when conditional items were inserted above them) and no
- * slide clip bounds ever cut the content (which produced the clipped
- * section-title artifacts: only the first letter rendering at the card's
- * left edge).
+ * scroll position when conditional items were inserted above them).
+ *
+ * A [Column] (not a [Box]) is required because call sites pass multiple
+ * children (a section title followed by its card). A Box stacks children on
+ * top of each other, which hid each title behind its card and left only the
+ * first letter peeking out through the card's rounded corner.
  */
 @Composable
 fun StaggerIn(
@@ -107,7 +109,7 @@ fun StaggerIn(
     content: @Composable () -> Unit,
 ) {
     if (rememberReduceMotion()) {
-        Box(modifier) { content() }
+        Column(modifier) { content() }
         return
     }
     var visible by remember { mutableStateOf(false) }
@@ -126,7 +128,7 @@ fun StaggerIn(
         animationSpec = MotionTokens.gentleSpring(),
         label = "staggerRise",
     )
-    Box(
+    Column(
         modifier.graphicsLayer {
             this.alpha = alpha
             this.translationY = offsetYPx.toFloat()
