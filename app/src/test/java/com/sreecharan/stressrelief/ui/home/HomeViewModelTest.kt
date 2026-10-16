@@ -24,6 +24,13 @@ private class FakeHealthConnectStateProvider(
 ) : HealthConnectStateProvider {
     override suspend fun isAvailable(): Boolean = available
 
+    override suspend fun sdkStatus(): Int =
+        if (available) {
+            androidx.health.connect.client.HealthConnectClient.SDK_AVAILABLE
+        } else {
+            androidx.health.connect.client.HealthConnectClient.SDK_UNAVAILABLE
+        }
+
     override suspend fun hasAllPermissions(): Boolean = granted
 
     override fun requiredPermissions(): Set<String> = emptySet()

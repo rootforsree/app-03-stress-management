@@ -198,22 +198,22 @@ private fun NavHostController.navigateWithPaywallContext(
 }
 
 private enum class TabDestination(
-    val graph: Any,
     val routeClass: KClass<*>,
+    val startRoute: Any,
     val labelRes: Int,
     val selectedIcon: ImageVector,
     val unselectedIcon: ImageVector,
 ) {
-    Home(HomeTabGraph, HomeRoute::class, R.string.tab_home, Icons.Filled.Home, Icons.Outlined.Home),
-    Breathe(BreatheTabGraph, BreatheRoute::class, R.string.tab_breathe, Icons.Filled.Air, Icons.Outlined.Air),
+    Home(HomeRoute::class, HomeRoute, R.string.tab_home, Icons.Filled.Home, Icons.Outlined.Home),
+    Breathe(BreatheRoute::class, BreatheRoute, R.string.tab_breathe, Icons.Filled.Air, Icons.Outlined.Air),
     Journal(
-        JournalTabGraph,
         JournalRoute::class,
+        JournalRoute,
         R.string.tab_journal,
         Icons.AutoMirrored.Filled.MenuBook,
         Icons.AutoMirrored.Outlined.MenuBook,
     ),
-    Sleep(SleepTabGraph, SleepRoute::class, R.string.tab_sleep, Icons.Filled.Bedtime, Icons.Outlined.Bedtime),
+    Sleep(SleepRoute::class, SleepRoute, R.string.tab_sleep, Icons.Filled.Bedtime, Icons.Outlined.Bedtime),
 }
 
 /**
@@ -238,7 +238,12 @@ private fun MainTabScaffold(
                         NavigationBarItem(
                             selected = selected,
                             onClick = {
-                                navController.navigate(tab.graph) {
+                                // Navigate to the tab's start destination directly,
+                                // not the graph object: navigating to the graph
+                                // silently no-ops when returning to Home from
+                                // another tab (launchSingleTop sees the graph
+                                // already on the stack and skips the switch).
+                                navController.navigate(tab.startRoute) {
                                     // HomeTabGraph is always on the stack when tabs are visible.
                                     popUpTo(HomeTabGraph) { saveState = true }
                                     launchSingleTop = true

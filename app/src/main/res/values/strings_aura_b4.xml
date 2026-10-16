@@ -22,6 +22,9 @@
     <string name="home_health_title">Connect Health</string>
     <string name="home_health_body">Share resting heart rate and sleep with Aura to sharpen your stress score. Your health data never leaves your phone.</string>
     <string name="home_health_cta">Connect Health</string>
+    <string name="home_health_install_title">Install Health Connect</string>
+    <string name="home_health_install_body">Aura needs the Health Connect app to read your heart rate and sleep. Install it free from the Play Store, then come back here.</string>
+    <string name="home_health_install_cta">Get Health Connect</string>
     <string name="home_streak_sub">Keep the bloom growing. One calm moment a day.</string>
     <string name="home_quick_actions">Quick actions</string>
     <string name="home_action_checkin">Check in</string>

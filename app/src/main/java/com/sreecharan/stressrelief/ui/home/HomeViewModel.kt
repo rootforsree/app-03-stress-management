@@ -48,8 +48,11 @@ sealed interface HomeUiState {
 /** Health Connect opt-in state for the "Connect Health" card. */
 @Immutable
 sealed interface HealthConnectUiState {
-    /** Health Connect is not installed/available on this device. */
+    /** Health Connect is not supported on this device at all. */
     data object Unavailable : HealthConnectUiState
+
+    /** Health Connect can be installed/updated from the Play Store: show the install card. */
+    data object NeedsInstall : HealthConnectUiState
 
     /** Available but the stress-signal permissions are not granted: show the opt-in card. */
     data object Available : HealthConnectUiState
@@ -152,9 +155,13 @@ class HomeViewModel
                 healthConnectState.value =
                     runCatching {
                         when {
-                            !healthConnect.isAvailable() -> HealthConnectUiState.Unavailable
                             healthConnect.hasAllPermissions() -> HealthConnectUiState.Granted
-                            else -> HealthConnectUiState.Available
+                            healthConnect.isAvailable() -> HealthConnectUiState.Available
+                            healthConnect.sdkStatus() ==
+                                androidx.health.connect.client.HealthConnectClient
+                                    .SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED ->
+                                HealthConnectUiState.NeedsInstall
+                            else -> HealthConnectUiState.Unavailable
                         }
                     }.getOrDefault(HealthConnectUiState.Unavailable)
             }

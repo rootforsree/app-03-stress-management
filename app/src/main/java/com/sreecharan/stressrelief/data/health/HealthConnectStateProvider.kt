@@ -10,6 +10,13 @@ import androidx.activity.result.contract.ActivityResultContract
 interface HealthConnectStateProvider {
     suspend fun isAvailable(): Boolean
 
+    /**
+     * Raw Health Connect SDK status (SDK_AVAILABLE,
+     * SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED, SDK_UNAVAILABLE). Lets the UI
+     * distinguish "not installed yet" from "not supported on this device".
+     */
+    suspend fun sdkStatus(): Int
+
     suspend fun hasAllPermissions(): Boolean
 
     /** Permissions the app needs for stress signals; request via [permissionContract]. */

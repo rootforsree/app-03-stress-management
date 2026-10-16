@@ -1,5 +1,7 @@
 package com.sreecharan.stressrelief.ui.home
 
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -51,6 +54,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -93,6 +97,7 @@ fun HomeScreen(
         rememberLauncherForActivityResult(viewModel.healthConnect.permissionContract()) {
             viewModel.onHealthPermissionResult()
         }
+    val context = LocalContext.current
     HomeContent(
         state = state,
         onNavigate = onNavigate,
@@ -100,6 +105,21 @@ fun HomeScreen(
         onRefreshScore = viewModel::refreshStressScore,
         onConnectHealth = {
             healthPermissionLauncher.launch(viewModel.healthConnect.requiredPermissions())
+        },
+        onInstallHealthConnect = {
+            val packageName = "com.google.android.apps.healthdata"
+            val marketIntent =
+                Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("market://details?id=$packageName"),
+                )
+            val webIntent =
+                Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("https://play.google.com/store/apps/details?id=$packageName"),
+                )
+            runCatching { context.startActivity(marketIntent) }
+                .onFailure { runCatching { context.startActivity(webIntent) } }
         },
     )
 }
@@ -112,10 +132,14 @@ private fun HomeContent(
     onRetry: () -> Unit,
     onRefreshScore: () -> Unit,
     onConnectHealth: () -> Unit,
+    onInstallHealthConnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
         modifier = modifier,
+        // Nested inside MainTabScaffold's Scaffold: it already applies the
+        // system-bar insets, so this one must not add them a second time.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopAppBar(
                 title = {
@@ -167,6 +191,7 @@ private fun HomeContent(
                         onNavigate = onNavigate,
                         onRefreshScore = onRefreshScore,
                         onConnectHealth = onConnectHealth,
+                        onInstallHealthConnect = onInstallHealthConnect,
                     )
                 }
             }
@@ -180,6 +205,7 @@ private fun HomeDashboard(
     onNavigate: (Any) -> Unit,
     onRefreshScore: () -> Unit,
     onConnectHealth: () -> Unit,
+    onInstallHealthConnect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -208,6 +234,14 @@ private fun HomeDashboard(
             item {
                 StaggerIn(1) {
                     ConnectHealthCard(onConnect = onConnectHealth)
+                }
+            }
+        }
+        // Health Connect itself is missing: guide the user to the Play Store.
+        if (state.healthConnectState == HealthConnectUiState.NeedsInstall) {
+            item {
+                StaggerIn(1) {
+                    InstallHealthConnectCard(onInstall = onInstallHealthConnect)
                 }
             }
         }
@@ -288,6 +322,61 @@ private fun ConnectHealthCard(
             AuroraButton(
                 text = stringResource(R.string.home_health_cta),
                 onClick = onConnect,
+                gradient = true,
+            )
+        }
+    }
+}
+
+/** Install prompt: Health Connect is missing, so deep-link to the Play Store. */
+@Composable
+private fun InstallHealthConnectCard(
+    onInstall: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer,
+            ),
+    ) {
+        Column(Modifier.padding(20.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(AuraGradients.dawn()),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    val darkTheme = LocalAuroraDark.current
+                    Icon(
+                        Icons.Filled.MonitorHeart,
+                        contentDescription = null,
+                        tint = if (darkTheme) Color.White else Color(0xFF002021),
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    stringResource(R.string.home_health_install_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            Text(
+                stringResource(R.string.home_health_install_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f),
+            )
+            Spacer(Modifier.height(16.dp))
+            AuroraButton(
+                text = stringResource(R.string.home_health_install_cta),
+                onClick = onInstall,
                 gradient = true,
             )
         }

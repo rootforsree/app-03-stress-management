@@ -40,8 +40,13 @@ class HealthConnectClient(
 
     override suspend fun isAvailable(): Boolean =
         runCatching {
-            AndroidHealthConnectClient.getSdkStatus(context) == AndroidHealthConnectClient.SDK_AVAILABLE
+            sdkStatus() == AndroidHealthConnectClient.SDK_AVAILABLE
         }.getOrDefault(false)
+
+    override suspend fun sdkStatus(): Int =
+        runCatching {
+            AndroidHealthConnectClient.getSdkStatus(context)
+        }.getOrDefault(AndroidHealthConnectClient.SDK_UNAVAILABLE)
 
     override suspend fun hasAllPermissions(): Boolean =
         runCatching {
