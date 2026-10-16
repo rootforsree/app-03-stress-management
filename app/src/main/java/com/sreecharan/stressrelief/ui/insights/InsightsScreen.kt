@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -902,7 +903,7 @@ private fun StepsSectionCard(
                             when {
                                 vsAvg == null -> stops[0]
                                 vsAvg >= 1f -> stops[0]
-                                vsAvg >= 0.5f -> lerp(stops[0], stops[2], ((1f - vsAvg) * 2).coerceIn(0f, 1f))
+                                vsAvg >= 0.5f -> lerp(stops[0], stops[2], ((1.0 - vsAvg) * 2).coerceIn(0.0, 1.0).toFloat())
                                 else -> stops[3]
                             },
                         hasData = true,

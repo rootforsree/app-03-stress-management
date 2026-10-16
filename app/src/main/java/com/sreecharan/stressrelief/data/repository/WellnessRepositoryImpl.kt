@@ -20,6 +20,7 @@ import com.sreecharan.stressrelief.data.model.InsightsData
 import com.sreecharan.stressrelief.data.model.JournalEntry
 import com.sreecharan.stressrelief.data.model.Recommendation
 import com.sreecharan.stressrelief.data.model.RecommendationKind
+import com.sreecharan.stressrelief.data.model.RecoveryBand
 import com.sreecharan.stressrelief.data.model.MoodCheckIn
 import com.sreecharan.stressrelief.data.model.StressScore
 import com.sreecharan.stressrelief.data.util.TimeUtils
@@ -616,7 +617,7 @@ class WellnessRepositoryImpl
                                 title = "Move more today",
                                 body =
                                     "${formatSteps(stepsToday)} steps so far vs your " +
-                                        "${formatSteps(steps7DayAvg.roundToInt())} daily average. " +
+                                        "${formatSteps(steps7DayAvg.roundToLong())} daily average. " +
                                         "A brisk 20-minute walk adds roughly 2,000.",
                                 metricLabel = "Steps today",
                                 metricValue = formatSteps(stepsToday),
@@ -631,10 +632,10 @@ class WellnessRepositoryImpl
                         Recommendation(
                             title = "Raise the baseline",
                             body =
-                                "Your 7-day average is ${formatSteps(steps7DayAvg.roundToInt())} steps. " +
+                                "Your 7-day average is ${formatSteps(steps7DayAvg.roundToLong())} steps. " +
                                     "7,000 a day is a solid first target.",
                             metricLabel = "7-day average",
-                            metricValue = formatSteps(steps7DayAvg.roundToInt()),
+                            metricValue = formatSteps(steps7DayAvg.roundToLong()),
                             kind = RecommendationKind.ACTIVITY,
                         )
             }
