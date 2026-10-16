@@ -34,7 +34,7 @@ internal class SoftTonePlayer {
                 ShortArray(sampleCount) { i ->
                     val t = i.toFloat() / SAMPLE_RATE
                     // Raised-cosine envelope: no click at either end.
-                    val envelope = (0.5f * (1f - cos(2f * PI.toFloat() * i / sampleCount))).toFloat()
+                    val envelope = 0.5f * (1f - cos(2f * PI.toFloat() * i / sampleCount))
                     val tone = sin(2f * PI.toFloat() * frequencyHz * t)
                     (envelope * volume * tone * Short.MAX_VALUE).toInt().toShort()
                 }
